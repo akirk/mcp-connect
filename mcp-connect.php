@@ -1,0 +1,115 @@
+<?php
+/**
+ * Plugin Name:       MCP Connect
+ * Plugin URI:        https://github.com/akirk/mcp-connect
+ * Description:       Lets AI clients (Claude.ai, Claude Code, ChatGPT, Codex, Cursor, VS Code …) connect to this site's MCP servers with a normal sign-in. Adds the OAuth 2.1 server the MCP Adapter lacks and a Connect page with ready-made links and snippets.
+ * Version:           0.1.0
+ * Requires at least: 6.9
+ * Requires PHP:      7.4
+ * Requires Plugins:  mcp-adapter
+ * Author:            Alex Kirk
+ * License:           GPLv2 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:       mcp-oauth
+ *
+ * @package mcp-connect
+ */
+
+namespace MCP_OAuth;
+
+defined( 'ABSPATH' ) || exit;
+
+define( 'MCP_OAUTH_VERSION', '0.1.0' );
+define( 'MCP_OAUTH_FILE', __FILE__ );
+define( 'MCP_OAUTH_DIR', plugin_dir_path( __FILE__ ) );
+
+/**
+ * REST namespace that carries the token, registration and revocation endpoints.
+ */
+const REST_NAMESPACE = 'mcp-oauth/v1';
+
+/**
+ * The only scope this server issues. Access is governed by the MCP server's own
+ * permission checks and each ability's permission callback, acting as the user
+ * who authorized the client.
+ */
+const SCOPE = 'mcp';
+
+require MCP_OAUTH_DIR . 'includes/servers.php';
+require MCP_OAUTH_DIR . 'includes/storage.php';
+require MCP_OAUTH_DIR . 'includes/discovery.php';
+require MCP_OAUTH_DIR . 'includes/register.php';
+require MCP_OAUTH_DIR . 'includes/authorize.php';
+require MCP_OAUTH_DIR . 'includes/token.php';
+require MCP_OAUTH_DIR . 'includes/middleware.php';
+require MCP_OAUTH_DIR . 'includes/abilities.php';
+require MCP_OAUTH_DIR . 'includes/health.php';
+require MCP_OAUTH_DIR . 'includes/clients.php';
+require MCP_OAUTH_DIR . 'includes/admin.php';
+
+/**
+ * Whether the MCP Adapter is loaded.
+ */
+function adapter_available(): bool {
+	return class_exists( '\WP\MCP\Core\McpAdapter' );
+}
+
+/**
+ * Whether the OAuth endpoints may be exposed at all.
+ *
+ * Authorization codes and bearer tokens must never travel over plain HTTP on a
+ * public site, so the endpoints only exist on HTTPS sites and local environments.
+ */
+function transport_allowed(): bool {
+	$allowed = 0 === strpos( strtolower( home_url() ), 'https://' ) || 'local' === wp_get_environment_type();
+
+	/**
+	 * Filters whether the OAuth endpoints are exposed.
+	 *
+	 * @param bool $allowed True on HTTPS sites and local environments.
+	 */
+	return (bool) apply_filters( 'mcp_oauth_transport_allowed', $allowed );
+}
+
+/**
+ * Capability a user needs to authorize an AI client. Defaults to the same
+ * capability the MCP Adapter requires for transport access.
+ */
+function authorize_capability(): string {
+	/**
+	 * Filters the capability required to authorize an AI client.
+	 *
+	 * @param string $capability Default 'read'.
+	 */
+	$capability = apply_filters( 'mcp_oauth_authorize_capability', 'read' );
+	return is_string( $capability ) && '' !== $capability ? $capability : 'read';
+}
+
+/**
+ * Boot the plugin once every plugin is loaded.
+ */
+function boot(): void {
+	Admin\register();
+	Health\register();
+
+	if ( ! adapter_available() ) {
+		return;
+	}
+
+	Storage\maybe_install();
+	Abilities\register();
+
+	if ( ! transport_allowed() ) {
+		return;
+	}
+
+	Discovery\register();
+	Register\register();
+	Authorize\register();
+	Token\register();
+	Middleware\register();
+}
+add_action( 'plugins_loaded', __NAMESPACE__ . '\boot', 20 );
+
+register_activation_hook( __FILE__, __NAMESPACE__ . '\Storage\maybe_install' );
+register_deactivation_hook( __FILE__, __NAMESPACE__ . '\Storage\unschedule' );
