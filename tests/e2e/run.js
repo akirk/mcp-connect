@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Boot a disposable WordPress with wp-playground-cli, run the e2e tests against it, shut it down.
 //
-//   npm run test:e2e                       # mcp-adapter is installed from wordpress.org
+//   npm run test:e2e                       # mcp-adapter is installed from its latest GitHub release
+//   MCP_ADAPTER_ZIP=<url> npm run test:e2e # …from a specific release zip
 //   MCP_ADAPTER_DIR=../mcp-adapter npm run test:e2e   # …or mounted from a local checkout (offline)
 //   PLAYGROUND_URL=http://127.0.0.1:9400 node --test tests/e2e   # against an already running site
 
@@ -33,7 +34,9 @@ const mounts = [
 if ( process.env.MCP_ADAPTER_DIR ) {
 	mounts.push( path.resolve( process.env.MCP_ADAPTER_DIR ) + ':/wordpress/wp-content/plugins/mcp-adapter' );
 } else {
-	steps.push( { step: 'installPlugin', pluginData: { resource: 'wordpress.org/plugins', slug: 'mcp-adapter' }, options: { activate: false } } );
+	// The MCP Adapter is not on wordpress.org; its GitHub releases ship a built zip (with vendor/).
+	const zip = process.env.MCP_ADAPTER_ZIP || 'https://github.com/WordPress/mcp-adapter/releases/latest/download/mcp-adapter.zip';
+	steps.push( { step: 'installPlugin', pluginData: { resource: 'url', url: zip }, options: { activate: false, targetFolderName: 'mcp-adapter' } } );
 }
 steps.push(
 	{ step: 'activatePlugin', pluginPath: 'mcp-adapter/mcp-adapter.php' },
