@@ -88,7 +88,9 @@ process.on( 'SIGTERM', () => { shutdown(); process.exit( 143 ); } );
 ( async () => {
 	await waitReady( Number( process.env.PLAYGROUND_TIMEOUT || 300000 ) );
 	console.log( 'WordPress is up at ' + URL_ );
-	const result = spawnSync( process.execPath, [ '--test', '--test-concurrency=1', path.join( __dirname ) ], {
+	// Explicit file list: a directory argument is not accepted by every Node version.
+	const files = fs.readdirSync( __dirname ).filter( ( f ) => f.endsWith( '.test.js' ) ).sort().map( ( f ) => path.join( __dirname, f ) );
+	const result = spawnSync( process.execPath, [ '--test', '--test-concurrency=1', ...files ], {
 		stdio: 'inherit',
 		env: { ...process.env, PLAYGROUND_URL: URL_ },
 	} );
