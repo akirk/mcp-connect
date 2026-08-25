@@ -4,7 +4,7 @@
 	"description": "OAuth 2.1 sign-in and a Connect page for the WordPress MCP Adapter.",
 	"license": "GPL-2.0-or-later",
 	"scripts": {
-		"test:e2e": "node tests/e2e/run.js"
+		"test:e2e": "playwright test"
 	},
 	"devDependencies": {
 		"@wp-playground/cli": "^3.1.50",

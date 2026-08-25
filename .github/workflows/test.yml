@@ -61,3 +61,9 @@ jobs:
       - run: npm run test:e2e
         env:
           VERBOSE: '1'
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          if-no-files-found: ignore

@@ -49,10 +49,10 @@ composer install          # PHPUnit + WordPress coding standards
 composer test             # unit tests (no WordPress needed; tests/bootstrap.php stubs it)
 composer lint             # phpcs
 npm install && npx playwright install chromium
-npm run test:e2e          # boots WordPress with wp-playground-cli and runs tests/e2e
+npm run test:e2e          # Playwright Test; boots WordPress with wp-playground-cli (tests/e2e/playground.js)
 ```
 
-The e2e suite installs the MCP Adapter from its latest GitHub release (`MCP_ADAPTER_ZIP` picks another release); set `MCP_ADAPTER_DIR=/path/to/mcp-adapter` to mount a local checkout instead (works offline). Set `PLAYGROUND_URL` to run `node --test tests/e2e` against a site that is already running. All three run in GitHub Actions on every push.
+The e2e suite installs the MCP Adapter from its latest GitHub release (`MCP_ADAPTER_ZIP` picks another release); set `MCP_ADAPTER_DIR=/path/to/mcp-adapter` to mount a local checkout instead (works offline). Set `PLAYGROUND_URL` to run the specs against a site that is already running (`npx playwright test --ui` works too). All three run in GitHub Actions on every push.
 
 ## Changelog
 
