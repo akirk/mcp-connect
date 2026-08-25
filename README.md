@@ -40,6 +40,19 @@ The OAuth endpoints are only exposed on HTTPS sites (and local environments).
 - `mcp_oauth_redirect_uri_schemes` — custom URL schemes accepted as redirect URIs for native apps.
 - `mcp_oauth_transport_allowed` — override the HTTPS requirement.
 - `mcp_oauth_hidden_abilities` — ability names hidden from clients.
+- `mcp_oauth_registration_limits` — per-address limits on anonymous client registration (`per_hour`, `max_clients`).
+
+## Development
+
+```
+composer install          # PHPUnit + WordPress coding standards
+composer test             # unit tests (no WordPress needed; tests/bootstrap.php stubs it)
+composer lint             # phpcs
+npm install && npx playwright install chromium
+npm run test:e2e          # boots WordPress with wp-playground-cli and runs tests/e2e
+```
+
+The e2e suite installs the MCP Adapter from wordpress.org; set `MCP_ADAPTER_DIR=/path/to/mcp-adapter` to mount a local checkout instead (works offline). Set `PLAYGROUND_URL` to run `node --test tests/e2e` against a site that is already running. All three run in GitHub Actions on every push.
 
 ## Changelog
 

@@ -149,13 +149,41 @@ function error( string $code, string $description, int $status = 400 ): WP_REST_
 }
 
 /**
+ * Registration limits per address.
+ *
+ * @return array{per_hour:int,max_clients:int}
+ */
+function limits(): array {
+	/**
+	 * Filters the per-address limits on anonymous client registration.
+	 *
+	 * @param array $limits {
+	 *     @type int $per_hour    Registrations allowed per hour. Default 10.
+	 *     @type int $max_clients Registered clients allowed at once. Default 20.
+	 * }
+	 */
+	$limits = apply_filters(
+		'mcp_oauth_registration_limits',
+		array(
+			'per_hour'    => REGISTRATIONS_PER_HOUR,
+			'max_clients' => MAX_CLIENTS_PER_IP,
+		)
+	);
+	return array(
+		'per_hour'    => max( 1, (int) ( $limits['per_hour'] ?? REGISTRATIONS_PER_HOUR ) ),
+		'max_clients' => max( 1, (int) ( $limits['max_clients'] ?? MAX_CLIENTS_PER_IP ) ),
+	);
+}
+
+/**
  * Handle a registration request.
  */
 function handle( WP_REST_Request $request ): WP_REST_Response {
-	if ( ! within_rate_limit( 'register', REGISTRATIONS_PER_HOUR, HOUR_IN_SECONDS ) ) {
+	$limits = limits();
+	if ( ! within_rate_limit( 'register', $limits['per_hour'], HOUR_IN_SECONDS ) ) {
 		return error( 'too_many_requests', 'Too many registrations from this address.', 429 );
 	}
-	if ( '' !== client_ip() && Storage\client_count_for_ip( client_ip() ) >= MAX_CLIENTS_PER_IP ) {
+	if ( '' !== client_ip() && Storage\client_count_for_ip( client_ip() ) >= $limits['max_clients'] ) {
 		return error( 'too_many_requests', 'Too many clients registered from this address.', 429 );
 	}
 

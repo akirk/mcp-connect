@@ -1,0 +1,16 @@
+{
+	"name": "mcp-connect",
+	"private": true,
+	"description": "OAuth 2.1 sign-in and a Connect page for the WordPress MCP Adapter.",
+	"license": "GPL-2.0-or-later",
+	"scripts": {
+		"test:e2e": "node tests/e2e/run.js"
+	},
+	"devDependencies": {
+		"@wp-playground/cli": "^3.1.50",
+		"playwright": "^1.62.1"
+	},
+	"engines": {
+		"node": ">=20"
+	}
+}
