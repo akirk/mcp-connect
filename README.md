@@ -16,7 +16,7 @@ Connect Claude.ai, Claude Code, ChatGPT, Codex, Cursor and other AI clients to y
 
 ## Description
 
-The [MCP Adapter](https://wordpress.org/plugins/mcp-adapter/) exposes WordPress abilities as an MCP server, but it only accepts cookie or Application Password authentication. AI clients such as Claude.ai expect the OAuth 2.1 flow described by the MCP specification: they discover the authorization server, register themselves, and send the user to the site to sign in.
+The [MCP Adapter](https://github.com/WordPress/mcp-adapter) exposes WordPress abilities as an MCP server, but it only accepts cookie or Application Password authentication. AI clients such as Claude.ai expect the OAuth 2.1 flow described by the MCP specification: they discover the authorization server, register themselves, and send the user to the site to sign in.
 
 This plugin adds exactly that:
 

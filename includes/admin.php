@@ -59,7 +59,7 @@ function dependency_notice(): void {
 	if ( \MCP_OAuth\adapter_available() || ! current_user_can( 'activate_plugins' ) ) {
 		return;
 	}
-	echo '<div class="notice notice-error"><p>' . wp_kses_post( __( '<strong>MCP Connect</strong> needs the <a href="https://wordpress.org/plugins/mcp-adapter/">MCP Adapter</a> plugin to be installed and active.', 'mcp-oauth' ) ) . '</p></div>';
+	echo '<div class="notice notice-error"><p>' . wp_kses_post( __( '<strong>MCP Connect</strong> needs the <a href="https://github.com/WordPress/mcp-adapter">MCP Adapter</a> plugin to be installed and active.', 'mcp-oauth' ) ) . '</p></div>';
 }
 
 /**
@@ -125,7 +125,7 @@ function render(): void {
 	?>
 	<div class="wrap mcp-oauth">
 		<h1><?php esc_html_e( 'MCP Connect', 'mcp-oauth' ); ?></h1>
-		<p class="description" style="max-width:52em"><?php esc_html_e( 'Connect an AI assistant to this site. The assistant signs in with your WordPress account and can then use the site’s MCP tools on your behalf — no application password to copy around.', 'mcp-oauth' ); ?></p>
+		<p class="description" style="max-width:52em"><?php esc_html_e( 'With MCP Connect you can allow AI assistants to connect to this WordPress using OAuth. Once connected, they act on your behalf; you can revoke that at any time under the Connections tab.', 'mcp-oauth' ); ?></p>
 
 		<?php if ( \MCP_OAuth\is_playground() ) : ?>
 			<div class="notice notice-info inline mcp-oauth-playground-notice"><p>
