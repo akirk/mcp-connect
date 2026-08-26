@@ -9,7 +9,9 @@ test( 'the Connect page shows the endpoint and a tab per client', async ( { admi
 	await adminPage.goto( CONNECT );
 	await expect( adminPage.locator( '.nav-tab-active' ) ).toHaveText( 'Connect' );
 	await expect( adminPage.locator( '.mcp-oauth-playground-notice' ), 'the suite runs in Playground, which is detected' ).toContainText( 'WordPress Playground' );
-	await expect( adminPage.locator( '.mcp-oauth-playground-notice a' ) ).toHaveAttribute( 'href', 'https://developer.wordpress.org/playground/developers/apis/query-api/' );
+	await expect( adminPage.locator( '.mcp-oauth-playground-notice a' ).first() ).toHaveAttribute( 'href', /make\.wordpress\.org\/playground\/.*mcp/ );
+	await expect( adminPage.locator( '.mcp-oauth-playground-notice a' ).last() ).toHaveAttribute( 'href', 'https://developer.wordpress.org/playground/developers/apis/query-api/' );
+	await expect( adminPage.locator( '.mcp-oauth-playground-notice + .nav-tab-wrapper, .mcp-oauth-playground-notice ~ .nav-tab-wrapper' ), 'the notice sits above the tabs' ).toBeVisible();
 	await adminPage.click( '.mcp-oauth-tab:has-text("Any other MCP client")' );
 	await expect( adminPage.locator( '#mcp-oauth-url' ) ).toHaveText( oauth.mcpUrl );
 	const tabs = await adminPage.locator( '.mcp-oauth-tab' ).allTextContents();

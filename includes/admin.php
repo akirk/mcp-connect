@@ -127,6 +127,19 @@ function render(): void {
 		<h1><?php esc_html_e( 'MCP Connect', 'mcp-oauth' ); ?></h1>
 		<p class="description" style="max-width:52em"><?php esc_html_e( 'Connect an AI assistant to this site. The assistant signs in with your WordPress account and can then use the site’s MCP tools on your behalf — no application password to copy around.', 'mcp-oauth' ); ?></p>
 
+		<?php if ( \MCP_OAuth\is_playground() ) : ?>
+			<div class="notice notice-info inline mcp-oauth-playground-notice"><p>
+				<?php
+				printf(
+					/* translators: 1: link to the guide on connecting AI agents to Playground, 2: link to the Playground Query API documentation */
+					esc_html__( 'This site runs in WordPress Playground, which lives in your browser and cannot be reached by AI clients, so none of them can connect to it. To use MCP with Playground, see %1$s and the %2$s.', 'mcp-oauth' ),
+					'<a href="https://make.wordpress.org/playground/2026/03/17/connect-ai-coding-agents-to-wordpress-playground-with-mcp/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Connect AI coding agents to WordPress Playground with MCP', 'mcp-oauth' ) . '</a>',
+					'<a href="https://developer.wordpress.org/playground/developers/apis/query-api/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Playground Query API documentation', 'mcp-oauth' ) . '</a>'
+				);
+				?>
+			</p></div>
+		<?php endif; ?>
+
 		<nav class="nav-tab-wrapper">
 			<?php foreach ( $tabs as $id => $label ) : ?>
 				<a class="nav-tab<?php echo $tab === $id ? ' nav-tab-active' : ''; ?>" href="<?php echo esc_url( page_url( array( 'tab' => $id ) ) ); ?>"><?php echo esc_html( $label ); ?></a>
@@ -137,17 +150,6 @@ function render(): void {
 			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Access revoked.', 'mcp-oauth' ); ?></p></div>
 		<?php endif; ?>
 
-		<?php if ( \MCP_OAuth\is_playground() ) : ?>
-			<div class="notice notice-info inline mcp-oauth-playground-notice"><p>
-				<?php
-				printf(
-					/* translators: %s: link to the Playground Query API documentation */
-					esc_html__( 'This site runs in WordPress Playground, which lives in your browser and cannot be reached by AI clients, so none of them can connect to it. To use MCP with Playground, see the %s.', 'mcp-oauth' ),
-					'<a href="https://developer.wordpress.org/playground/developers/apis/query-api/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Playground Query API documentation', 'mcp-oauth' ) . '</a>'
-				);
-				?>
-			</p></div>
-		<?php endif; ?>
 		<?php if ( ! \MCP_OAuth\adapter_available() ) : ?>
 			<div class="notice notice-error inline"><p><?php esc_html_e( 'The MCP Adapter plugin is not active, so there is no MCP server to connect to.', 'mcp-oauth' ); ?></p></div>
 		<?php elseif ( ! \MCP_OAuth\transport_allowed() ) : ?>
