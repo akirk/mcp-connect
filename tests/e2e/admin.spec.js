@@ -1,7 +1,7 @@
 // The MCP Connect page, ability visibility and Site Health.
 const { test, expect } = require( './fixtures' );
 
-const CONNECT = '/wp-admin/tools.php?page=mcp-oauth';
+const CONNECT = '/wp-admin/tools.php?page=mcp-connect';
 
 test( 'the Connect page shows the endpoint and a tab per client', async ( { adminPage, oauth } ) => {
 	await adminPage.goto( CONNECT );

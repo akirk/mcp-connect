@@ -15,7 +15,7 @@ use MCP_OAuth\Storage;
 
 defined( 'ABSPATH' ) || exit;
 
-const PAGE_SLUG = 'mcp-oauth';
+const PAGE_SLUG = 'mcp-connect';
 
 /**
  * Hook the page and notices.
