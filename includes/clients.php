@@ -117,7 +117,7 @@ function catalog( string $url ): array {
 			sprintf( __( 'In %s, open Settings → Connectors.', 'mcp-oauth' ), $app ),
 			__( 'Choose “Add custom connector”.', 'mcp-oauth' ),
 			/* translators: %s: connector name */
-			sprintf( __( 'Name it “%s” and paste your MCP server URL (shown above) as the remote MCP server URL. Leave client ID and secret empty.', 'mcp-oauth' ), $name ),
+			sprintf( __( 'Name it “%s” and paste the URL below as the remote MCP server URL. Leave client ID and secret empty.', 'mcp-oauth' ), $name ),
 			__( 'Save, then click Connect and sign in to this site when the browser opens.', 'mcp-oauth' ),
 		);
 	};
@@ -149,7 +149,7 @@ function catalog( string $url ): array {
 				__( 'In ChatGPT, open Settings → Apps & Connectors → Advanced settings and enable Developer mode.', 'mcp-oauth' ),
 				__( 'Go back to Apps & Connectors and choose “Create”.', 'mcp-oauth' ),
 				/* translators: %s: connector name */
-				sprintf( __( 'Name it “%s”, paste your MCP server URL (shown above) as the MCP server URL and keep Authentication on OAuth.', 'mcp-oauth' ), $name ),
+				sprintf( __( 'Name it “%s”, paste the URL below as the MCP server URL and keep Authentication on OAuth.', 'mcp-oauth' ), $name ),
 				__( 'Confirm the warning about unverified apps, create the app, and sign in to this site when the browser opens.', 'mcp-oauth' ),
 			),
 			'note'  => __( 'Developer mode is required for apps OpenAI has not reviewed, which any connector to your own site always is.', 'mcp-oauth' ),
@@ -258,10 +258,12 @@ function catalog( string $url ): array {
 			'bridge'  => true,
 		),
 		'other'          => array(
-			'name'    => __( 'Any other MCP client', 'mcp-oauth' ),
-			'snippet' => json( array( 'mcpServers' => $bridge ) ),
-			'hint'    => __( 'Clients that support remote MCP servers with OAuth only need the URL above. For clients that only run local (stdio) servers, use the mcp-remote bridge:', 'mcp-oauth' ),
-			'bridge'  => true,
+			'name'          => __( 'Any other MCP client', 'mcp-oauth' ),
+			'hint'          => __( 'Any client that supports remote MCP servers with OAuth only needs your MCP server URL:', 'mcp-oauth' ),
+			'url'           => true,
+			'snippet_intro' => __( 'For clients that only run local (stdio) servers, use the mcp-remote bridge instead:', 'mcp-oauth' ),
+			'snippet'       => json( array( 'mcpServers' => $bridge ) ),
+			'bridge'        => true,
 		),
 	);
 }

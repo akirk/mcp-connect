@@ -12,6 +12,8 @@
 
 Connect Claude.ai, Claude Code, ChatGPT, Codex, Cursor and other AI clients to your site's MCP servers with a normal sign-in.
 
+[Try MCP Connect in WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/akirk/mcp-connect/main/blueprint.json)
+
 ## Description
 
 The [MCP Adapter](https://wordpress.org/plugins/mcp-adapter/) exposes WordPress abilities as an MCP server, but it only accepts cookie or Application Password authentication. AI clients such as Claude.ai expect the OAuth 2.1 flow described by the MCP specification: they discover the authorization server, register themselves, and send the user to the site to sign in.

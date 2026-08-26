@@ -8,6 +8,7 @@ const CONNECTIONS = CONNECT + '&tab=connections';
 test( 'the Connect page shows the endpoint and a tab per client', async ( { adminPage, oauth } ) => {
 	await adminPage.goto( CONNECT );
 	await expect( adminPage.locator( '.nav-tab-active' ) ).toHaveText( 'Connect' );
+	await adminPage.click( '.mcp-oauth-tab:has-text("Any other MCP client")' );
 	await expect( adminPage.locator( '#mcp-oauth-url' ) ).toHaveText( oauth.mcpUrl );
 	const tabs = await adminPage.locator( '.mcp-oauth-tab' ).allTextContents();
 	for ( const name of [ 'Claude.ai', 'Claude Desktop', 'Claude Code', 'ChatGPT', 'Cursor' ] ) {
