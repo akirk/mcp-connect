@@ -137,6 +137,17 @@ function render(): void {
 			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Access revoked.', 'mcp-oauth' ); ?></p></div>
 		<?php endif; ?>
 
+		<?php if ( \MCP_OAuth\is_playground() ) : ?>
+			<div class="notice notice-info inline mcp-oauth-playground-notice"><p>
+				<?php
+				printf(
+					/* translators: %s: link to the Playground Query API documentation */
+					esc_html__( 'This site runs in WordPress Playground, which lives in your browser and cannot be reached by AI clients, so none of them can connect to it. To use MCP with Playground, see the %s.', 'mcp-oauth' ),
+					'<a href="https://developer.wordpress.org/playground/developers/apis/query-api/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Playground Query API documentation', 'mcp-oauth' ) . '</a>'
+				);
+				?>
+			</p></div>
+		<?php endif; ?>
 		<?php if ( ! \MCP_OAuth\adapter_available() ) : ?>
 			<div class="notice notice-error inline"><p><?php esc_html_e( 'The MCP Adapter plugin is not active, so there is no MCP server to connect to.', 'mcp-oauth' ); ?></p></div>
 		<?php elseif ( ! \MCP_OAuth\transport_allowed() ) : ?>
@@ -235,7 +246,7 @@ function render_connect( $server, array $servers, string $url, bool $is_admin ):
 			<?php endif; ?>
 			<?php if ( ! empty( $client['command'] ) ) : ?>
 				<div class="mcp-oauth-snippet">
-					<pre><code><?php echo esc_html( $client['command'] ); ?></code></pre>
+					<pre class="is-shell"><code><?php echo esc_html( $client['command'] ); ?></code></pre>
 					<button type="button" class="button button-small mcp-oauth-copy" data-copy="<?php echo esc_attr( $client['command'] ); ?>"><?php esc_html_e( 'Copy', 'mcp-oauth' ); ?></button>
 				</div>
 			<?php endif; ?>
@@ -429,7 +440,8 @@ function render_assets(): void {
 		.mcp-oauth .mcp-oauth-client { max-width:900px; margin-top:0; }
 		.mcp-oauth .mcp-oauth-client h3 { margin-top:0; }
 		.mcp-oauth .mcp-oauth-snippet { position:relative; }
-		.mcp-oauth .mcp-oauth-snippet pre { background:#f6f7f7; border:1px solid #dcdcde; padding:12px; overflow:auto; margin:0 0 8px; }
+		.mcp-oauth .mcp-oauth-snippet pre { background:#f6f7f7; border:1px solid #dcdcde; padding:12px 80px 12px 12px; overflow:auto; margin:0 0 8px; }
+		.mcp-oauth .mcp-oauth-snippet pre.is-shell { white-space:pre-wrap; word-break:break-all; }
 		.mcp-oauth .mcp-oauth-snippet pre code { background:transparent; padding:0; font-size:13px; }
 		.mcp-oauth .mcp-oauth-snippet .mcp-oauth-copy { position:absolute; top:6px; right:6px; }
 		.mcp-oauth .mcp-oauth-paths { margin:0 0 12px; }

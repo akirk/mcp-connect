@@ -8,6 +8,8 @@ const CONNECTIONS = CONNECT + '&tab=connections';
 test( 'the Connect page shows the endpoint and a tab per client', async ( { adminPage, oauth } ) => {
 	await adminPage.goto( CONNECT );
 	await expect( adminPage.locator( '.nav-tab-active' ) ).toHaveText( 'Connect' );
+	await expect( adminPage.locator( '.mcp-oauth-playground-notice' ), 'the suite runs in Playground, which is detected' ).toContainText( 'WordPress Playground' );
+	await expect( adminPage.locator( '.mcp-oauth-playground-notice a' ) ).toHaveAttribute( 'href', 'https://developer.wordpress.org/playground/developers/apis/query-api/' );
 	await adminPage.click( '.mcp-oauth-tab:has-text("Any other MCP client")' );
 	await expect( adminPage.locator( '#mcp-oauth-url' ) ).toHaveText( oauth.mcpUrl );
 	const tabs = await adminPage.locator( '.mcp-oauth-tab' ).allTextContents();

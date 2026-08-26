@@ -72,6 +72,18 @@ function transport_allowed(): bool {
 }
 
 /**
+ * Whether this WordPress runs inside WordPress Playground (PHP compiled to
+ * WebAssembly). Such a site lives in a browser tab or a local process, so no
+ * AI client can reach it from the outside.
+ */
+function is_playground(): bool {
+	$software = isset( $_SERVER['SERVER_SOFTWARE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) : '';
+	return false !== strpos( $software, 'PHP.wasm' )
+		&& false !== strpos( ABSPATH, '/wordpress' )
+		&& function_exists( 'post_message_to_js' );
+}
+
+/**
  * Capability a user needs to authorize an AI client. Defaults to the same
  * capability the MCP Adapter requires for transport access.
  */
