@@ -127,8 +127,9 @@ function catalog( string $url ): array {
 			'name'  => 'Claude.ai',
 			'cloud' => true,
 			'link'  => array(
-				'url'   => claude_connector_link( $url ),
-				'label' => __( 'Add to Claude.ai', 'mcp-oauth' ),
+				'url'         => claude_connector_link( $url ),
+				'label'       => __( 'Add to Claude.ai', 'mcp-oauth' ),
+				'description' => __( 'Opens claude.ai with the connector name and URL already filled in — nothing to copy.', 'mcp-oauth' ),
 			),
 			'steps' => $connector_steps( 'claude.ai' ),
 			'note'  => __( 'Custom connectors need a Pro, Max, Team or Enterprise plan. Connectors added on claude.ai are also available in Claude Desktop and the mobile apps.', 'mcp-oauth' ),
@@ -162,8 +163,9 @@ function catalog( string $url ): array {
 		'cursor'         => array(
 			'name'    => 'Cursor',
 			'link'    => array(
-				'url'   => cursor_deeplink( $url ),
-				'label' => __( 'Add to Cursor', 'mcp-oauth' ),
+				'url'         => cursor_deeplink( $url ),
+				'label'       => __( 'Add to Cursor', 'mcp-oauth' ),
+				'description' => __( 'Opens Cursor and adds the server for you — nothing to copy.', 'mcp-oauth' ),
 			),
 			'snippet' => json( array( 'mcpServers' => $http ) ),
 			'hint'    => $add_to( 'mcp.json' ),

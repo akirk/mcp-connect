@@ -41,6 +41,7 @@ test( 'abilities are exposed by default and can be hidden with the eye toggle', 
 	expect( await oauth.discoverAbilities( tokens.access_token ), 'meta.mcp.public=false stays hidden' ).not.toContain( 'demo/opted-out' );
 
 	await adminPage.goto( ABILITIES );
+	await expect( adminPage.locator( 'tr[data-ability="mcp-adapter/discover-abilities"]' ), 'the adapter’s own tools are listed even when the registry initialized before the adapter' ).toBeVisible();
 	const row = adminPage.locator( 'tr[data-ability="demo/list-trips"]' );
 	const eye = row.locator( '.mcp-oauth-eye' );
 	await expect( adminPage.locator( 'tr[data-ability="demo/opted-out"] .mcp-oauth-eye' ), 'opted-out abilities have no toggle' ).toHaveCount( 0 );

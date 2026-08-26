@@ -117,6 +117,7 @@ namespace {
 	function add_action( $hook, $callback, $priority = 10, $args = 1 ) { add_filter( $hook, $callback, $priority, $args ); }
 	function add_filter( $hook, $callback, $priority = 10, $args = 1 ) { $GLOBALS['wp_test']['filters'][ $hook ][ $priority ][] = $callback; }
 	function has_filter( $hook, $callback = false ) { return ! empty( $GLOBALS['wp_test']['filters'][ $hook ] ); }
+	function remove_action( $hook, $callback, $priority = 10 ) { return true; }
 	function apply_filters( $hook, $value, ...$args ) {
 		$filters = $GLOBALS['wp_test']['filters'][ $hook ] ?? array();
 		ksort( $filters );
@@ -128,6 +129,7 @@ namespace {
 		return $value;
 	}
 	function do_action( $hook, ...$args ) { $GLOBALS['wp_test']['actions'][] = $hook; }
+	function did_action( $hook ) { return count( array_keys( $GLOBALS['wp_test']['actions'], $hook, true ) ); }
 	function register_activation_hook( $file, $callback ) {}
 	function register_deactivation_hook( $file, $callback ) {}
 	function register_rest_route( $ns, $route, $args ) { $GLOBALS['wp_test']['routes'][ $ns . $route ] = $args; return true; }

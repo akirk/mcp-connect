@@ -228,7 +228,15 @@ function render_connect( $server, array $servers, string $url, bool $is_admin ):
 				</p>
 			<?php endif; ?>
 			<?php if ( ! empty( $client['link'] ) ) : ?>
-				<p><a class="button button-primary button-hero" href="<?php echo esc_url( $client['link']['url'], array( 'https', 'cursor' ) ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $client['link']['label'] ); ?></a></p>
+				<p class="mcp-oauth-oneclick">
+					<a class="button button-primary button-hero" href="<?php echo esc_url( $client['link']['url'], array( 'https', 'cursor' ) ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $client['link']['label'] ); ?></a>
+					<?php if ( ! empty( $client['link']['description'] ) ) : ?>
+						<span class="description"><?php echo esc_html( $client['link']['description'] ); ?></span>
+					<?php endif; ?>
+				</p>
+				<?php if ( ! empty( $client['steps'] ) || ! empty( $client['snippet'] ) ) : ?>
+					<h4 class="mcp-oauth-manual"><?php esc_html_e( 'Or set it up by hand', 'mcp-oauth' ); ?></h4>
+				<?php endif; ?>
 			<?php endif; ?>
 			<?php if ( ! empty( $client['steps'] ) ) : ?>
 				<ol>
@@ -441,6 +449,8 @@ function render_assets(): void {
 		.mcp-oauth .mcp-oauth-tab[aria-selected="true"] { background:#2271b1; border-color:#2271b1; color:#fff; }
 		.mcp-oauth .mcp-oauth-client { max-width:900px; margin-top:0; }
 		.mcp-oauth .mcp-oauth-client h3 { margin-top:0; }
+		.mcp-oauth .mcp-oauth-oneclick { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+		.mcp-oauth .mcp-oauth-manual { margin:20px 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:.02em; color:#646970; }
 		.mcp-oauth .mcp-oauth-snippet { position:relative; }
 		.mcp-oauth .mcp-oauth-snippet pre { background:#f6f7f7; border:1px solid #dcdcde; padding:12px 80px 12px 12px; overflow:auto; margin:0 0 8px; }
 		.mcp-oauth .mcp-oauth-snippet pre.is-shell { white-space:pre-wrap; word-break:break-all; }

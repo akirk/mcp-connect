@@ -18,6 +18,16 @@ add_filter(
 	}
 );
 
+// Initialize the Abilities API registry early in every request, before the MCP Adapter hooks into
+// it, the way a site with other ability-registering plugins behaves.
+add_action(
+	'init',
+	function () {
+		wp_get_abilities();
+	},
+	1
+);
+
 add_action(
 	'wp_abilities_api_init',
 	function () {

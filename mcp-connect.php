@@ -109,6 +109,7 @@ function boot(): void {
 	}
 
 	Storage\maybe_install();
+	Servers\register();
 	Abilities\register();
 
 	if ( ! transport_allowed() ) {
