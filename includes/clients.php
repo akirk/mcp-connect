@@ -117,7 +117,7 @@ function catalog( string $url ): array {
 			sprintf( __( 'In %s, open Settings → Connectors.', 'mcp-oauth' ), $app ),
 			__( 'Choose “Add custom connector”.', 'mcp-oauth' ),
 			/* translators: %s: connector name */
-			sprintf( __( 'Name it “%s” and paste the URL below as the remote MCP server URL. Leave client ID and secret empty.', 'mcp-oauth' ), $name ),
+			sprintf( __( 'Name it “%s” and paste your MCP server URL (shown above) as the remote MCP server URL. Leave client ID and secret empty.', 'mcp-oauth' ), $name ),
 			__( 'Save, then click Connect and sign in to this site when the browser opens.', 'mcp-oauth' ),
 		);
 	};
@@ -149,7 +149,7 @@ function catalog( string $url ): array {
 				__( 'In ChatGPT, open Settings → Apps & Connectors → Advanced settings and enable Developer mode.', 'mcp-oauth' ),
 				__( 'Go back to Apps & Connectors and choose “Create”.', 'mcp-oauth' ),
 				/* translators: %s: connector name */
-				sprintf( __( 'Name it “%s”, paste the URL below as the MCP server URL and keep Authentication on OAuth.', 'mcp-oauth' ), $name ),
+				sprintf( __( 'Name it “%s”, paste your MCP server URL (shown above) as the MCP server URL and keep Authentication on OAuth.', 'mcp-oauth' ), $name ),
 				__( 'Confirm the warning about unverified apps, create the app, and sign in to this site when the browser opens.', 'mcp-oauth' ),
 			),
 			'note'  => __( 'Developer mode is required for apps OpenAI has not reviewed, which any connector to your own site always is.', 'mcp-oauth' ),

@@ -82,7 +82,14 @@ function handle_actions(): void {
 	} elseif ( 'delete_client' === $action && '' !== $client_id && current_user_can( 'manage_options' ) ) {
 		Storage\delete_client( $client_id );
 	}
-	wp_safe_redirect( page_url( array( 'revoked' => 1 ) ) );
+	wp_safe_redirect(
+		page_url(
+			array(
+				'revoked' => 1,
+				'tab'     => 'connections',
+			)
+		)
+	);
 	exit;
 }
 
@@ -106,10 +113,25 @@ function render(): void {
 	$server   = $servers[ $selected ] ?? Servers\primary();
 	$url      = $server ? Servers\resource( $server ) : '';
 	$is_admin = current_user_can( 'manage_options' );
+	$tabs     = array(
+		'connect'     => __( 'Connect', 'mcp-oauth' ),
+		'abilities'   => __( 'Abilities', 'mcp-oauth' ),
+		'connections' => __( 'Connections', 'mcp-oauth' ),
+	);
+	$tab      = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'connect'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( ! isset( $tabs[ $tab ] ) ) {
+		$tab = 'connect';
+	}
 	?>
 	<div class="wrap mcp-oauth">
 		<h1><?php esc_html_e( 'MCP Connect', 'mcp-oauth' ); ?></h1>
 		<p class="description" style="max-width:52em"><?php esc_html_e( 'Connect an AI assistant to this site. The assistant signs in with your WordPress account and can then use the site’s MCP tools on your behalf — no application password to copy around.', 'mcp-oauth' ); ?></p>
+
+		<nav class="nav-tab-wrapper">
+			<?php foreach ( $tabs as $id => $label ) : ?>
+				<a class="nav-tab<?php echo $tab === $id ? ' nav-tab-active' : ''; ?>" href="<?php echo esc_url( page_url( array( 'tab' => $id ) ) ); ?>"><?php echo esc_html( $label ); ?></a>
+			<?php endforeach; ?>
+		</nav>
 
 		<?php if ( ! empty( $_GET['revoked'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
 			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Access revoked.', 'mcp-oauth' ); ?></p></div>
@@ -121,13 +143,14 @@ function render(): void {
 			<div class="notice notice-error inline"><p><?php esc_html_e( 'This site is served over plain HTTP. Sign-in tokens would travel unencrypted, so the OAuth endpoints are disabled until the site uses HTTPS.', 'mcp-oauth' ); ?></p></div>
 		<?php elseif ( ! $server ) : ?>
 			<div class="notice notice-warning inline"><p><?php esc_html_e( 'No MCP server is registered. The MCP Adapter’s default server is missing — check the mcp_adapter_create_default_server filter.', 'mcp-oauth' ); ?></p></div>
-		<?php else : ?>
-			<?php render_connect( $server, $servers, $url, $is_admin ); ?>
 		<?php endif; ?>
 
-		<?php render_connections( $is_admin ); ?>
-		<?php if ( \MCP_OAuth\adapter_available() ) : ?>
+		<?php if ( 'connect' === $tab && $server && \MCP_OAuth\transport_allowed() ) : ?>
+			<?php render_connect( $server, $servers, $url, $is_admin ); ?>
+		<?php elseif ( 'abilities' === $tab && \MCP_OAuth\adapter_available() ) : ?>
 			<?php render_abilities( $is_admin ); ?>
+		<?php elseif ( 'connections' === $tab ) : ?>
+			<?php render_connections( $is_admin ); ?>
 		<?php endif; ?>
 	</div>
 	<?php
@@ -145,48 +168,41 @@ function render(): void {
 function render_connect( $server, array $servers, string $url, bool $is_admin ): void {
 	$cloud_ok = Clients\reachable_from_cloud();
 	?>
-	<h2><?php esc_html_e( 'Your MCP server', 'mcp-oauth' ); ?></h2>
-	<?php if ( count( $servers ) > 1 ) : ?>
-		<form method="get" style="margin-bottom:8px">
-			<input type="hidden" name="page" value="<?php echo esc_attr( PAGE_SLUG ); ?>">
-			<label for="mcp-oauth-server"><?php esc_html_e( 'Server:', 'mcp-oauth' ); ?></label>
-			<select name="server" id="mcp-oauth-server" onchange="this.form.submit()">
-				<?php foreach ( $servers as $id => $candidate ) : ?>
-					<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $candidate === $server ); ?>><?php echo esc_html( $candidate->get_server_name() ); ?></option>
-				<?php endforeach; ?>
-			</select>
-		</form>
-	<?php endif; ?>
-	<div class="mcp-oauth-endpoint">
-		<code id="mcp-oauth-url"><?php echo esc_html( $url ); ?></code>
-		<button type="button" class="button mcp-oauth-copy" data-copy="<?php echo esc_attr( $url ); ?>"><?php esc_html_e( 'Copy URL', 'mcp-oauth' ); ?></button>
-	</div>
-	<p class="description">
-		<?php
-		printf(
-			/* translators: %s: server name */
-			esc_html__( '“%s”. Every client below connects to this URL and signs in through your browser.', 'mcp-oauth' ),
-			esc_html( $server->get_server_name() )
-		);
-		?>
-		<?php if ( ! $cloud_ok ) : ?>
-			<br><strong><?php esc_html_e( 'This site is not reachable from the internet, so Claude.ai and ChatGPT cannot connect to it; desktop and terminal clients can.', 'mcp-oauth' ); ?></strong>
+	<div class="mcp-oauth-server card">
+		<?php if ( count( $servers ) > 1 ) : ?>
+			<form method="get" style="margin-bottom:8px">
+				<input type="hidden" name="page" value="<?php echo esc_attr( PAGE_SLUG ); ?>">
+				<label for="mcp-oauth-server"><?php esc_html_e( 'MCP server:', 'mcp-oauth' ); ?></label>
+				<select name="server" id="mcp-oauth-server" onchange="this.form.submit()">
+					<?php foreach ( $servers as $id => $candidate ) : ?>
+						<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $candidate === $server ); ?>><?php echo esc_html( $candidate->get_server_name() ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</form>
 		<?php endif; ?>
-	</p>
-
-	<?php if ( $is_admin ) : ?>
+		<label for="mcp-oauth-url" class="mcp-oauth-server-label"><?php esc_html_e( 'Your MCP server URL', 'mcp-oauth' ); ?></label>
+		<div class="mcp-oauth-endpoint">
+			<code id="mcp-oauth-url"><?php echo esc_html( $url ); ?></code>
+			<button type="button" class="button mcp-oauth-copy" data-copy="<?php echo esc_attr( $url ); ?>"><?php esc_html_e( 'Copy', 'mcp-oauth' ); ?></button>
+		</div>
 		<p class="description">
-			<?php
-			printf(
-				/* translators: %s: link to Site Health */
-				esc_html__( 'Not sure the endpoints are reachable? %s checks the discovery documents and the sign-in challenge from this server.', 'mcp-oauth' ),
-				'<a href="' . esc_url( admin_url( 'site-health.php' ) ) . '">' . esc_html__( 'Site Health', 'mcp-oauth' ) . '</a>'
-			);
-			?>
+			<?php esc_html_e( 'Every client signs in to this site through your browser; no password is copied anywhere.', 'mcp-oauth' ); ?>
+			<?php if ( $is_admin ) : ?>
+				<?php
+				printf(
+					/* translators: %s: link to Site Health */
+					esc_html__( '%s verifies that the endpoints are reachable.', 'mcp-oauth' ),
+					'<a href="' . esc_url( admin_url( 'site-health.php' ) ) . '">' . esc_html__( 'Site Health', 'mcp-oauth' ) . '</a>'
+				);
+				?>
+			<?php endif; ?>
+			<?php if ( ! $cloud_ok ) : ?>
+				<br><strong><?php esc_html_e( 'This site is not reachable from the internet, so Claude.ai and ChatGPT cannot connect to it; desktop and terminal clients can.', 'mcp-oauth' ); ?></strong>
+			<?php endif; ?>
 		</p>
-	<?php endif; ?>
+	</div>
 
-	<h2><?php esc_html_e( 'Connect a client', 'mcp-oauth' ); ?></h2>
+	<h2><?php esc_html_e( 'Choose your client', 'mcp-oauth' ); ?></h2>
 	<div class="mcp-oauth-tabs" role="tablist">
 		<?php foreach ( Clients\catalog( $url ) as $id => $client ) : ?>
 			<button type="button" role="tab" class="mcp-oauth-tab" data-target="mcp-oauth-client-<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $client['name'] ); ?></button>
@@ -215,7 +231,6 @@ function render_connect( $server, array $servers, string $url, bool $is_admin ):
 						<li><?php echo esc_html( $step ); ?></li>
 					<?php endforeach; ?>
 				</ol>
-				<div class="mcp-oauth-endpoint"><code><?php echo esc_html( $url ); ?></code> <button type="button" class="button button-small mcp-oauth-copy" data-copy="<?php echo esc_attr( $url ); ?>"><?php esc_html_e( 'Copy', 'mcp-oauth' ); ?></button></div>
 			<?php endif; ?>
 			<?php if ( ! empty( $client['hint'] ) ) : ?>
 				<p><?php echo wp_kses( $client['hint'], array( 'code' => array() ) ); ?></p>
@@ -282,6 +297,8 @@ function render_connections( bool $is_admin ): void {
  * A table of connections.
  */
 function connections_table( array $rows, bool $show_user ): void {
+	// A token is bound to one MCP server; the column only says something when there are several.
+	$show_server = count( Servers\all() ) > 1;
 	?>
 	<table class="widefat striped" style="max-width:1100px">
 		<thead>
@@ -290,7 +307,9 @@ function connections_table( array $rows, bool $show_user ): void {
 				<?php if ( $show_user ) : ?>
 					<th><?php esc_html_e( 'User', 'mcp-oauth' ); ?></th>
 				<?php endif; ?>
-				<th><?php esc_html_e( 'MCP server', 'mcp-oauth' ); ?></th>
+				<?php if ( $show_server ) : ?>
+					<th><?php esc_html_e( 'MCP server', 'mcp-oauth' ); ?></th>
+				<?php endif; ?>
 				<th><?php esc_html_e( 'Connected', 'mcp-oauth' ); ?></th>
 				<th><?php esc_html_e( 'Last used', 'mcp-oauth' ); ?></th>
 				<th><?php esc_html_e( 'Expires if unused', 'mcp-oauth' ); ?></th>
@@ -313,7 +332,9 @@ function connections_table( array $rows, bool $show_user ): void {
 				<?php if ( $show_user ) : ?>
 					<td><?php echo $user ? esc_html( $user->display_name ) : esc_html( '#' . (int) $row['user_id'] ); ?></td>
 				<?php endif; ?>
-				<td><?php echo $server ? esc_html( $server->get_server_name() ) : '<code>' . esc_html( $row['resource'] ) . '</code>'; ?></td>
+				<?php if ( $show_server ) : ?>
+					<td><?php echo $server ? esc_html( $server->get_server_name() ) : '<code>' . esc_html( $row['resource'] ) . '</code>'; ?></td>
+				<?php endif; ?>
 				<td><?php echo esc_html( format_time( $row['created_at'] ) ); ?></td>
 				<td><?php echo esc_html( format_time( $row['last_used_at'] ) ); ?></td>
 				<td><?php echo esc_html( format_time( $row['expires_at'] ) ); ?></td>
@@ -409,7 +430,10 @@ function render_assets(): void {
 		.mcp-oauth .mcp-oauth-snippet pre code { background:transparent; padding:0; font-size:13px; }
 		.mcp-oauth .mcp-oauth-snippet .mcp-oauth-copy { position:absolute; top:6px; right:6px; }
 		.mcp-oauth .mcp-oauth-paths { margin:0 0 12px; }
-		.mcp-oauth h2 { margin-top:2em; }
+		.mcp-oauth h2 { margin-top:1.5em; }
+		.mcp-oauth .nav-tab-wrapper { margin-top:12px; }
+		.mcp-oauth .mcp-oauth-server { max-width:900px; margin-top:16px; }
+		.mcp-oauth .mcp-oauth-server-label { display:block; font-weight:600; }
 		.mcp-oauth .mcp-oauth-eye { background:none; border:0; padding:0; cursor:pointer; line-height:1; }
 		.mcp-oauth .mcp-oauth-eye:disabled { opacity:.5; cursor:wait; }
 		.mcp-oauth .mcp-oauth-ability.is-hidden { color:#646970; }

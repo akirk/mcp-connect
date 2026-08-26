@@ -2,9 +2,12 @@
 const { test, expect } = require( './fixtures' );
 
 const CONNECT = '/wp-admin/tools.php?page=mcp-connect';
+const ABILITIES = CONNECT + '&tab=abilities';
+const CONNECTIONS = CONNECT + '&tab=connections';
 
 test( 'the Connect page shows the endpoint and a tab per client', async ( { adminPage, oauth } ) => {
 	await adminPage.goto( CONNECT );
+	await expect( adminPage.locator( '.nav-tab-active' ) ).toHaveText( 'Connect' );
 	await expect( adminPage.locator( '#mcp-oauth-url' ) ).toHaveText( oauth.mcpUrl );
 	const tabs = await adminPage.locator( '.mcp-oauth-tab' ).allTextContents();
 	for ( const name of [ 'Claude.ai', 'Claude Desktop', 'Claude Code', 'ChatGPT', 'Cursor' ] ) {
@@ -18,11 +21,12 @@ test( 'the Connect page shows the endpoint and a tab per client', async ( { admi
 
 test( 'connections are listed and can be revoked', async ( { adminPage, oauth } ) => {
 	const { tokens } = await oauth.connect( adminPage );
-	await adminPage.goto( CONNECT );
+	await adminPage.goto( CONNECTIONS );
 	const row = adminPage.locator( 'table.widefat tbody tr', { hasText: 'Claude' } ).first();
 	await expect( row, 'the connection appears' ).toBeVisible();
 	await Promise.all( [ adminPage.waitForNavigation(), row.locator( 'button:has-text("Revoke")' ).click() ] );
 	await expect( adminPage.locator( '.notice-success' ) ).toContainText( 'Access revoked' );
+	await expect( adminPage.locator( '.nav-tab-active' ), 'stays on the Connections tab' ).toHaveText( 'Connections' );
 	expect( ( await oauth.mcp( tokens.access_token ).initialize() ).status ).toBe( 401 );
 } );
 
@@ -31,7 +35,7 @@ test( 'abilities are exposed by default and can be hidden with the eye toggle', 
 	expect( await oauth.discoverAbilities( tokens.access_token ), 'a non-"public" ability is discoverable' ).toContain( 'demo/list-trips' );
 	expect( await oauth.discoverAbilities( tokens.access_token ), 'meta.mcp.public=false stays hidden' ).not.toContain( 'demo/opted-out' );
 
-	await adminPage.goto( CONNECT );
+	await adminPage.goto( ABILITIES );
 	const row = adminPage.locator( 'tr[data-ability="demo/list-trips"]' );
 	const eye = row.locator( '.mcp-oauth-eye' );
 	await expect( adminPage.locator( 'tr[data-ability="demo/opted-out"] .mcp-oauth-eye' ), 'opted-out abilities have no toggle' ).toHaveCount( 0 );
