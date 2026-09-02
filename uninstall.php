@@ -13,4 +13,5 @@ foreach ( array( 'clients', 'codes', 'tokens' ) as $table ) {
 }
 delete_option( 'mcp_oauth_schema_version' );
 delete_option( 'mcp_oauth_hidden_abilities' );
+delete_option( 'mcp_oauth_direct_tools' );
 wp_clear_scheduled_hook( 'mcp_oauth_gc' );

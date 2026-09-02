@@ -25,7 +25,7 @@ This plugin adds exactly that:
 - An authorization endpoint on `wp-login.php` with a consent screen in the login page's own style, so signing in works even where REST cookie authentication is disabled.
 - Authorization-code grant with mandatory PKCE (S256), refresh-token rotation, and revocation (RFC 7009).
 - Bearer-token authentication on the MCP routes — and only there. Tokens are bound to the MCP server they were issued for.
-- A **Tools → MCP Connect** page with a one-click "Add to Claude.ai" link and ready-made commands or config snippets for Claude Desktop, Claude Code, ChatGPT, Codex, Cursor, VS Code, Windsurf, Gemini CLI, Antigravity, Zed, Cline, Roo Code and OpenCode, plus the list of connected clients with a Revoke button and a list of every registered ability with an eye icon to hide it from clients or show it again.
+- A **Tools → MCP Connect** page with a one-click "Add to Claude.ai" link and ready-made commands or config snippets for Claude Desktop, Claude Code, ChatGPT, Codex, Cursor, VS Code, Windsurf, Gemini CLI, Antigravity, Zed, Cline, Roo Code and OpenCode, plus a **Tools** tab listing what the server actually hands to a client, the list of connected clients with a Revoke button, and a list of every registered ability with an eye icon to hide it from clients and a checkbox to expose it as a tool of its own.
 - A Site Health test that verifies, from the server itself, that the discovery documents are served and the MCP endpoint issues the sign-in challenge.
 
 Tokens are opaque random strings stored only as SHA-256 hashes. No signing keys, no external dependencies.
@@ -33,6 +33,12 @@ Tokens are opaque random strings stored only as SHA-256 hashes. No signing keys,
 ### Which abilities do clients see?
 
 All of them, unless an ability opts out with `meta.mcp.public = false`. The MCP Adapter on its own only lists abilities marked `meta.public`, but that flag does not protect anything: the MCP endpoint is only reachable by a signed-in user, and each ability enforces its own permission callback for that user. An administrator can hide individual abilities from clients on the MCP Connect page by clicking the eye icon.
+
+### How do clients see them?
+
+By default the way the MCP Adapter presents them: through the three meta-tools its default server registers — `discover-abilities`, `get-ability-info` and `execute-ability` — so a client names an ability in a string and gets to it in two calls. That keeps the tool list short on a site with a hundred abilities, at the cost of a round trip and a schema the client never sees.
+
+Tick **Expose as MCP tool** next to an ability on the MCP Connect page to also register it as a tool in its own right, with its own name, description and input schema, so a client calls it in a single step. The meta-tools stay either way, so nothing becomes unreachable — promotion is for the handful of abilities worth spending a client's tool budget on. The `mcp_oauth_direct_tools` filter sets the promoted list in code, and `mcp_oauth_tools` has the final say over what the server registers.
 
 The OAuth endpoints are only exposed on HTTPS sites (and local environments).
 
@@ -42,6 +48,8 @@ The OAuth endpoints are only exposed on HTTPS sites (and local environments).
 - `mcp_oauth_redirect_uri_schemes` — custom URL schemes accepted as redirect URIs for native apps.
 - `mcp_oauth_transport_allowed` — override the HTTPS requirement.
 - `mcp_oauth_hidden_abilities` — ability names hidden from clients.
+- `mcp_oauth_direct_tools` — ability names exposed as tools of their own.
+- `mcp_oauth_tools` — the final tool list of the default MCP server, given the adapter's meta-tools and the promoted abilities as further arguments.
 - `mcp_oauth_registration_limits` — per-address limits on anonymous client registration (`per_hour`, `max_clients`).
 
 ## Development

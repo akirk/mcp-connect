@@ -96,6 +96,59 @@ function primary() {
 }
 
 /**
+ * The tools, resources and prompts a server hands to a connected client.
+ *
+ * This is the adapter's own view, after every filter has run — what a client
+ * actually receives from `tools/list`, not what the site asked for.
+ *
+ * @param \WP\MCP\Core\McpServer $server Server.
+ * @return array<int, array{type:string,name:string,ability:string,description:string}>
+ */
+function inventory( $server ): array {
+	// The listing getters hand back protocol DTOs; the singular ones hand back the
+	// adapter's wrappers, which are the only place the backing ability is named.
+	$sources = array(
+		'tool'     => array( 'get_tools', 'get_mcp_tool' ),
+		'resource' => array( 'get_resources', 'get_mcp_resource' ),
+		'prompt'   => array( 'get_prompts', 'get_mcp_prompt' ),
+	);
+	$rows = array();
+	foreach ( $sources as $type => $source ) {
+		foreach ( $server->{$source[0]}() as $key => $dto ) {
+			$wrapper = method_exists( $server, $source[1] ) ? $server->{$source[1]}( (string) $key ) : null;
+			$rows[]  = component( $type, (string) $key, $dto, $wrapper );
+		}
+	}
+	return $rows;
+}
+
+/**
+ * One row of the inventory.
+ *
+ * A tool or prompt knows its own protocol name; a resource is filed under its
+ * URI, which is what identifies it to a client.
+ *
+ * @param string      $type    One of tool, resource, prompt.
+ * @param string      $key     The key the server filed the component under.
+ * @param object      $dto     The protocol DTO the server advertises.
+ * @param object|null $wrapper The adapter's McpTool, McpResource or McpPrompt, when it has one.
+ * @return array{type:string,name:string,ability:string,description:string}
+ */
+function component( string $type, string $key, $dto, $wrapper = null ): array {
+	$context = $wrapper && method_exists( $wrapper, 'get_observability_context' ) ? $wrapper->get_observability_context() : array();
+	$name    = $key;
+	if ( 'resource' !== $type && method_exists( $dto, 'getName' ) ) {
+		$name = (string) $dto->getName();
+	}
+	return array(
+		'type'        => $type,
+		'name'        => $name,
+		'ability'     => isset( $context['ability_name'] ) && is_string( $context['ability_name'] ) ? $context['ability_name'] : '',
+		'description' => method_exists( $dto, 'getDescription' ) ? (string) $dto->getDescription() : '',
+	);
+}
+
+/**
  * The REST route (as WP_REST_Request::get_route() reports it) of a server.
  *
  * @param \WP\MCP\Core\McpServer $server Server.
