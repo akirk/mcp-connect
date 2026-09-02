@@ -37,6 +37,7 @@ namespace {
 			'caps'        => array(),
 			'blogname'    => 'Example Site',
 			'servers'     => array(),
+			'abilities'   => array(),
 			'permalinks'  => true,
 		);
 		$_GET     = array();
@@ -190,6 +191,25 @@ namespace {
 		public function get_status() { return $this->status; }
 		public function header( $key, $value ) { $this->headers[ $key ] = $value; }
 	}
+
+	class WP_Ability {
+		private $name; private $args;
+		public function __construct( $name, $args ) { $this->name = $name; $this->args = $args; }
+		public function get_name() { return $this->name; }
+		public function get_label() { return $this->args['label'] ?? $this->name; }
+		public function get_meta() { return $this->args['meta'] ?? array(); }
+	}
+
+	/**
+	 * Register a fake ability, running it through the registration filter the
+	 * way the Abilities API does.
+	 */
+	function wp_test_register_ability( $name, $args = array() ) {
+		$args = apply_filters( 'wp_register_ability_args', $args, $name );
+		$GLOBALS['wp_test']['abilities'][ $name ] = new WP_Ability( $name, $args );
+	}
+	function wp_get_abilities() { return $GLOBALS['wp_test']['abilities']; }
+	function wp_get_ability( $name ) { return $GLOBALS['wp_test']['abilities'][ $name ] ?? null; }
 
 	require_once __DIR__ . '/stubs/class-mcp-adapter.php';
 	require_once __DIR__ . '/../mcp-connect.php';

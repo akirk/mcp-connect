@@ -112,6 +112,15 @@ function oauthHelpers( baseURL, request ) {
 		return call;
 	}
 
+	/** The tool names the server advertises. A promoted `travel/x` arrives as `travel-x`. */
+	async function listTools( accessToken ) {
+		const call = mcp( accessToken );
+		await call.initialize();
+		const { body } = await call( 'tools/list', {}, 2 );
+		return body.result.tools.map( ( t ) => t.name );
+	}
+
+	/** The ability names reachable through the adapter's discover meta-tool. */
 	async function discoverAbilities( accessToken ) {
 		const call = mcp( accessToken );
 		await call.initialize();
@@ -119,7 +128,7 @@ function oauthHelpers( baseURL, request ) {
 		return JSON.parse( body.result.content[ 0 ].text ).abilities.map( ( a ) => a.name );
 	}
 
-	return { url, mcpUrl, registerClient, pkce, authorizeUrl, consent, exchange, refresh, connect, mcp, discoverAbilities };
+	return { url, mcpUrl, registerClient, pkce, authorizeUrl, consent, exchange, refresh, connect, mcp, listTools, discoverAbilities };
 }
 
 const test = base.test.extend( {
