@@ -41,29 +41,50 @@ jobs:
       - run: vendor/bin/phpunit
 
   e2e:
-    name: End-to-end (Playground)
+    name: End-to-end (${{ matrix.adapter }} adapter)
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        # The plugin bundles the MCP Adapter; it must also work next to a
+        # separately installed copy of the same plugin.
+        adapter: [ bundled, standalone ]
     steps:
       - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer
+      # The bundled MCP Adapter lives in vendor/, which is not committed.
+      - uses: ramsey/composer-install@v4
+        with:
+          composer-options: "--no-dev"
       - uses: actions/setup-node@v6
         with:
           node-version: lts/*
       - run: npm install --no-audit --no-fund
+      - name: Resolved Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+      # package-lock.json is not committed, so the cache has to be keyed on the
+      # version npm actually resolved — keying on package.json restores browsers
+      # for a Playwright the run no longer uses.
       - name: Restore Playwright browsers from cache
-        id: playwright-cache
         uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('package.json') }}
-      - if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
+          key: ${{ runner.os }}-playwright-${{ steps.playwright.outputs.version }}
+      # A no-op when the cache already holds the right browser build.
+      - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
         env:
           VERBOSE: '1'
+          MCP_ADAPTER_PLUGIN: ${{ matrix.adapter == 'standalone' && '1' || '' }}
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-traces
+          name: playwright-traces-${{ matrix.adapter }}
           path: test-results/
           if-no-files-found: ignore

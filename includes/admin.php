@@ -53,13 +53,13 @@ function register_page(): void {
 }
 
 /**
- * Warn when the MCP Adapter is missing.
+ * Warn when the bundled MCP Adapter did not load.
  */
 function dependency_notice(): void {
 	if ( \MCP_OAuth\adapter_available() || ! current_user_can( 'activate_plugins' ) ) {
 		return;
 	}
-	echo '<div class="notice notice-error"><p>' . wp_kses_post( __( '<strong>MCP Connect</strong> needs the <a href="https://github.com/WordPress/mcp-adapter">MCP Adapter</a> plugin to be installed and active.', 'mcp-oauth' ) ) . '</p></div>';
+	echo '<div class="notice notice-error"><p>' . wp_kses_post( __( '<strong>MCP Connect</strong> could not load the <a href="https://github.com/WordPress/mcp-adapter">MCP Adapter</a> it bundles. Reinstall the plugin, or run <code>composer install</code> if this is a source checkout.', 'mcp-oauth' ) ) . '</p></div>';
 }
 
 /**
@@ -152,7 +152,7 @@ function render(): void {
 		<?php endif; ?>
 
 		<?php if ( ! \MCP_OAuth\adapter_available() ) : ?>
-			<div class="notice notice-error inline"><p><?php esc_html_e( 'The MCP Adapter plugin is not active, so there is no MCP server to connect to.', 'mcp-oauth' ); ?></p></div>
+			<div class="notice notice-error inline"><p><?php esc_html_e( 'The MCP Adapter did not load, so there is no MCP server to connect to.', 'mcp-oauth' ); ?></p></div>
 		<?php elseif ( ! \MCP_OAuth\transport_allowed() ) : ?>
 			<div class="notice notice-error inline"><p><?php esc_html_e( 'This site is served over plain HTTP. Sign-in tokens would travel unencrypted, so the OAuth endpoints are disabled until the site uses HTTPS.', 'mcp-oauth' ); ?></p></div>
 		<?php elseif ( ! $server ) : ?>

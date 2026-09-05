@@ -2,11 +2,10 @@
 /**
  * Plugin Name:       MCP Connect
  * Plugin URI:        https://github.com/akirk/mcp-connect
- * Description:       Lets AI clients (Claude.ai, Claude Code, ChatGPT, Codex, Cursor, VS Code …) connect to this site's MCP servers with a normal sign-in. Adds the OAuth 2.1 server the MCP Adapter lacks and a Connect page with ready-made links and snippets.
+ * Description:       Lets AI clients (Claude.ai, Claude Code, ChatGPT, Codex, Cursor, VS Code …) connect to this site's MCP servers with a normal sign-in. Bundles the WordPress MCP Adapter, adds the OAuth 2.1 server it lacks, and a Connect page with ready-made links and snippets.
  * Version:           0.1.0
  * Requires at least: 6.9
  * Requires PHP:      7.4
- * Requires Plugins:  mcp-adapter
  * Author:            Alex Kirk
  * License:           GPLv2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -22,6 +21,22 @@ defined( 'ABSPATH' ) || exit;
 define( 'MCP_OAUTH_VERSION', '0.1.0' );
 define( 'MCP_OAUTH_FILE', __FILE__ );
 define( 'MCP_OAUTH_DIR', plugin_dir_path( __FILE__ ) );
+
+/**
+ * The bundled MCP Adapter and its dependencies.
+ *
+ * This is the Jetpack autoloader, which every plugin that bundles the adapter
+ * shares: it collects the versioned class manifests of all active plugins and
+ * loads the newest copy of each class once. A separately installed MCP Adapter
+ * plugin therefore does not collide with this one — whichever of the two is
+ * newer serves the `WP\MCP\*` classes to both.
+ *
+ * It needs WordPress itself, so define `MCP_OAUTH_AUTOLOAD` as false to load
+ * the adapter some other way (the unit tests do, to keep their stubs).
+ */
+if ( ( ! defined( 'MCP_OAUTH_AUTOLOAD' ) || false !== MCP_OAUTH_AUTOLOAD ) && is_readable( MCP_OAUTH_DIR . 'vendor/autoload_packages.php' ) ) {
+	require_once MCP_OAUTH_DIR . 'vendor/autoload_packages.php';
+}
 
 /**
  * REST namespace that carries the token, registration and revocation endpoints.
@@ -52,6 +67,42 @@ require MCP_OAUTH_DIR . 'includes/admin.php';
  */
 function adapter_available(): bool {
 	return class_exists( '\WP\MCP\Core\McpAdapter' );
+}
+
+/**
+ * Where the MCP Adapter classes in use come from, for Site Health.
+ */
+function adapter_source(): string {
+	if ( ! adapter_available() ) {
+		return __( 'not loaded', 'mcp-oauth' );
+	}
+	try {
+		$file = ( new \ReflectionClass( '\WP\MCP\Core\McpAdapter' ) )->getFileName();
+	} catch ( \ReflectionException $e ) {
+		return __( 'unknown', 'mcp-oauth' );
+	}
+	$path = str_replace( wp_normalize_path( WP_PLUGIN_DIR ) . '/', '', wp_normalize_path( (string) $file ) );
+
+	return 0 === strpos( wp_normalize_path( (string) $file ), wp_normalize_path( MCP_OAUTH_DIR ) )
+		/* translators: %s: path to the loaded MCP Adapter file, relative to the plugin directory. */
+		? sprintf( __( 'bundled with MCP Connect (%s)', 'mcp-oauth' ), $path )
+		/* translators: %s: path to the loaded MCP Adapter file, relative to the plugin directory. */
+		: sprintf( __( 'separately installed plugin (%s)', 'mcp-oauth' ), $path );
+}
+
+/**
+ * Start the bundled MCP Adapter, unless a separately installed one already did.
+ *
+ * The adapter's own plugin file boots it while plugins load, before this runs,
+ * and both its `Plugin` and its `McpAdapter` class are singletons — so this is
+ * a no-op whenever the standalone plugin is active and working, and starts the
+ * adapter when it is absent (or present as a source checkout with no vendor
+ * directory of its own, in which case it bails out silently).
+ */
+function boot_adapter(): void {
+	if ( class_exists( '\WP\MCP\Plugin' ) ) {
+		\WP\MCP\Plugin::instance();
+	}
 }
 
 /**
@@ -103,6 +154,7 @@ function authorize_capability(): string {
 function boot(): void {
 	Admin\register();
 	Health\register();
+	boot_adapter();
 
 	if ( ! adapter_available() ) {
 		return;
