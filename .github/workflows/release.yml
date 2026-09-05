@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the plugin zip
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      SLUG: ${{ github.event.repository.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+
+      # Building from git archive lets .gitattributes export-ignore decide what
+      # ships, which is the same rule a WordPress.org deploy would apply.
+      - name: Build the release tree
+        run: |
+          mkdir -p "build/${SLUG}"
+          git archive HEAD | tar -x -C "build/${SLUG}"
+
+      # The bundled MCP Adapter. vendor/ is not committed, so the zip is the
+      # only place the two meet.
+      - name: Install production dependencies
+        working-directory: build/${{ env.SLUG }}
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      # composer install writes one into the exported tree, where .gitattributes
+      # had deliberately kept it out.
+      - name: Drop the generated lock file
+        run: rm -f "build/${SLUG}/composer.lock"
+
+      - name: Create the zip
+        run: |
+          cd build
+          zip -qr "${SLUG}.zip" "${SLUG}"
+          unzip -l "${SLUG}.zip" | tail -1
+
+      - name: Check the bundled adapter made it in
+        run: |
+          unzip -l "build/${SLUG}.zip" | grep -q "${SLUG}/vendor/wordpress/mcp-adapter/includes/Core/McpAdapter.php"
+
+      - name: Upload the zip to the release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/${{ env.SLUG }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Keep the zip as a workflow artifact
+        if: github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.SLUG }}
+          path: build/${{ env.SLUG }}.zip
