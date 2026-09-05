@@ -5,7 +5,6 @@
 **Requires at least:** 6.9
 **Tested up to:** 7.1
 **Requires PHP:** 7.4
-**Requires Plugins:** mcp-adapter
 **License:** GPLv2 or later
 **License URI:** https://www.gnu.org/licenses/gpl-2.0.html
 **Stable tag:** 0.1.0
@@ -28,7 +27,17 @@ This plugin adds exactly that:
 - A **Tools → MCP Connect** page with a one-click "Add to Claude.ai" link and ready-made commands or config snippets for Claude Desktop, Claude Code, ChatGPT, Codex, Cursor, VS Code, Windsurf, Gemini CLI, Antigravity, Zed, Cline, Roo Code and OpenCode, plus a **Tools** tab listing what the server actually hands to a client, the list of connected clients with a Revoke button, and a list of every registered ability with an eye icon to hide it from clients and a checkbox to expose it as a tool of its own.
 - A Site Health test that verifies, from the server itself, that the discovery documents are served and the MCP endpoint issues the sign-in challenge.
 
-Tokens are opaque random strings stored only as SHA-256 hashes. No signing keys, no external dependencies.
+Tokens are opaque random strings stored only as SHA-256 hashes. No signing keys, no external services.
+
+### The MCP Adapter is bundled
+
+The MCP Adapter is not in the WordPress.org plugin directory, so this plugin ships a copy of it: activating MCP Connect is enough to get an MCP server.
+
+If the MCP Adapter is also installed as a plugin of its own, nothing collides and nothing needs to be turned off — the standalone plugin takes over, and the bundled copy stands down.
+
+From MCP Adapter 0.6.1 on, both copies register their classes with the [Jetpack autoloader](https://github.com/Automattic/jetpack-autoloader), which loads the newer of the two once, for both plugins. An older standalone plugin brings a plain Composer autoloader that is registered first, so it serves its own classes throughout. Either way only one set of `WP\MCP\*` classes is ever loaded, and the adapter's singletons make the second boot a no-op.
+
+Update or remove the standalone plugin at will — MCP Connect keeps working either way. Tools → Site Health → Info → MCP Connect names the copy actually in use.
 
 ### Which abilities do clients see?
 
@@ -55,16 +64,19 @@ The OAuth endpoints are only exposed on HTTPS sites (and local environments).
 ## Development
 
 ```
-composer install          # PHPUnit + WordPress coding standards
+composer install          # the bundled MCP Adapter, PHPUnit and WordPress coding standards
 composer test             # unit tests (no WordPress needed; tests/bootstrap.php stubs it)
 composer lint             # phpcs
 npm install && npx playwright install chromium
 npm run test:e2e          # Playwright Test; boots WordPress with wp-playground-cli (tests/e2e/playground.js)
 ```
 
-The e2e suite installs the MCP Adapter from its latest GitHub release (`MCP_ADAPTER_ZIP` picks another release); set `MCP_ADAPTER_DIR=/path/to/mcp-adapter` to mount a local checkout instead (works offline). Set `PLAYGROUND_URL` to run the specs against a site that is already running (`npx playwright test --ui` works too). All three run in GitHub Actions on every push.
+`vendor/` holds the bundled MCP Adapter and is not committed, so a checkout needs `composer install` before it runs. What ships is built by CI: every push produces a `dist/<branch>` branch with the production dependencies installed (`.github/workflows/build-dist.yml`), which is what the Playground link above installs and what a release would be built from.
+
+The e2e suite runs against the bundled adapter. Set `MCP_ADAPTER_PLUGIN=1` to also install the standalone MCP Adapter plugin from its latest GitHub release and exercise the two side by side — `MCP_ADAPTER_ZIP=<url>` picks another release, `MCP_ADAPTER_DIR=/path/to/mcp-adapter` mounts a local checkout instead (works offline). Set `PLAYGROUND_URL` to run the specs against a site that is already running (`npx playwright test --ui` works too). All of it runs in GitHub Actions on every push, with the e2e suite covering both the bundled and the standalone adapter.
 
 ## Changelog
 
 ### 0.1.0
 - Initial release.
+- Bundles the MCP Adapter, so no separate install is needed; a separately installed one takes over automatically.

@@ -211,6 +211,11 @@ namespace {
 	function wp_get_abilities() { return $GLOBALS['wp_test']['abilities']; }
 	function wp_get_ability( $name ) { return $GLOBALS['wp_test']['abilities'][ $name ] ?? null; }
 
+	// The bundled MCP Adapter's autoloader needs a running WordPress, and the
+	// stub below stands in for its classes anyway. It has to be declared before
+	// anything can autoload the real ones out of vendor/.
+	define( 'MCP_OAUTH_AUTOLOAD', false );
+
 	require_once __DIR__ . '/stubs/class-mcp-adapter.php';
 	require_once __DIR__ . '/../mcp-connect.php';
 }

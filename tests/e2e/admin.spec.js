@@ -132,3 +132,20 @@ test( 'the Site Health test passes', async ( { adminPage, oauth } ) => {
 	await expect( trigger ).toBeAttached( { timeout: 60000 } );
 	expect( await trigger.evaluate( ( el ) => el.closest( '.health-check-accordion' ).parentElement.id ) ).toBe( 'health-check-issues-good' );
 } );
+
+test( 'Site Health names the MCP Adapter copy that is in use', async ( { adminPage } ) => {
+	// The plugin bundles the adapter; a separately installed one takes over.
+	const standalone = !! ( process.env.MCP_ADAPTER_PLUGIN || process.env.MCP_ADAPTER_DIR || process.env.MCP_ADAPTER_ZIP );
+
+	await adminPage.goto( '/wp-admin/site-health.php?tab=debug' );
+	const trigger = adminPage.locator( 'button[aria-controls="health-check-accordion-block-mcp-oauth"]' );
+	await expect( trigger ).toBeAttached( { timeout: 60000 } );
+	await trigger.click();
+
+	const row = adminPage.locator( '#health-check-accordion-block-mcp-oauth tr', { hasText: 'MCP Adapter' } ).first();
+	await expect( row ).toContainText(
+		standalone
+			? 'separately installed plugin (mcp-adapter/includes/Core/McpAdapter.php)'
+			: 'bundled with MCP Connect (mcp-connect/vendor/wordpress/mcp-adapter/includes/Core/McpAdapter.php)'
+	);
+} );

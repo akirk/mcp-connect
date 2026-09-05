@@ -159,8 +159,8 @@ function test(): array {
 
 	if ( ! \MCP_OAuth\adapter_available() ) {
 		$result['status']      = 'critical';
-		$result['label']       = __( 'The MCP Adapter plugin is not active', 'mcp-oauth' );
-		$result['description'] = '<p>' . esc_html__( 'MCP Connect needs the MCP Adapter plugin, which provides the MCP server itself.', 'mcp-oauth' ) . '</p>';
+		$result['label']       = __( 'The MCP Adapter is not loaded', 'mcp-oauth' );
+		$result['description'] = '<p>' . esc_html__( 'MCP Connect bundles the MCP Adapter, which provides the MCP server itself. Its files are missing from this installation — reinstall the plugin, or run composer install if this is a source checkout.', 'mcp-oauth' ) . '</p>';
 		return $result;
 	}
 	if ( ! \MCP_OAuth\transport_allowed() ) {
@@ -213,6 +213,10 @@ function add_info( array $info ): array {
 		'version'     => array(
 			'label' => __( 'Version', 'mcp-oauth' ),
 			'value' => MCP_OAUTH_VERSION,
+		),
+		'adapter'     => array(
+			'label' => __( 'MCP Adapter', 'mcp-oauth' ),
+			'value' => \MCP_OAuth\adapter_source(),
 		),
 		'transport'   => array(
 			'label' => __( 'OAuth endpoints enabled', 'mcp-oauth' ),
