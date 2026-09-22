@@ -12,6 +12,9 @@ use WP\MCP\Core\McpServer;
 class Test_Bearer extends TestCase {
 	protected function setUp(): void {
 		wp_test_reset();
+		$state          = &Middleware\state();
+		$state['token'] = null;
+		$state['error'] = null;
 	}
 
 	public function test_bearer_token_is_extracted_case_insensitively(): void {
@@ -45,6 +48,40 @@ class Test_Bearer extends TestCase {
 	public function test_request_without_bearer_is_left_alone(): void {
 		$this->assertNull( Middleware\resolve_bearer( null ) );
 		$this->assertNull( Middleware\reject_invalid_bearer( null ) );
+	}
+
+	public function test_capability_check_can_reenter_current_user_resolution(): void {
+		global $wpdb;
+
+		$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer valid-token';
+		$GLOBALS['wp_test']['options']['mcp_oauth_schema_version'] = '1';
+		$wpdb = new class() {
+			public $prefix = 'wp_';
+
+			public function prepare( $query, ...$args ) {
+				return array( $query, $args );
+			}
+
+			public function get_row( $query, $output ) {
+				return array(
+					'token_hash' => hash( 'sha256', 'valid-token' ),
+					'user_id'    => 42,
+				);
+			}
+
+			public function update( $table, $data, $where ) {
+				return 1;
+			}
+		};
+
+		$nested_user_id = null;
+		$GLOBALS['wp_test']['user_can_callback'] = static function () use ( &$nested_user_id ) {
+			$nested_user_id = Middleware\resolve_bearer( null );
+			return true;
+		};
+
+		$this->assertSame( 42, Middleware\resolve_bearer( null ) );
+		$this->assertSame( 42, $nested_user_id );
 	}
 
 	public function test_malformed_bearer_is_rejected_with_401(): void {

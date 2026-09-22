@@ -92,6 +92,15 @@ function has_bearer_scheme(): bool {
  * @return int|false|null
  */
 function resolve_bearer( $user_id ) {
+	static $resolving_user_id = null;
+
+	// Capability filters may ask WordPress for the current user while we are
+	// checking the token owner's capability. Complete that nested lookup with
+	// the identity already established by the token instead of recursing.
+	if ( null !== $resolving_user_id ) {
+		return $resolving_user_id;
+	}
+
 	$state = &state();
 	if ( ! empty( $user_id ) ) {
 		return $user_id;
@@ -109,8 +118,14 @@ function resolve_bearer( $user_id ) {
 		$state['error'] = new WP_Error( 'rest_oauth_invalid_token', __( 'The access token is invalid, expired or revoked.', 'mcp-oauth' ), array( 'status' => 401 ) );
 		return $user_id;
 	}
-	$user = get_user_by( 'id', (int) $token['user_id'] );
-	if ( ! $user || ! user_can( $user, \MCP_OAuth\authorize_capability() ) ) {
+	$resolving_user_id = (int) $token['user_id'];
+	try {
+		$user       = get_user_by( 'id', $resolving_user_id );
+		$authorized = $user && user_can( $user, \MCP_OAuth\authorize_capability() );
+	} finally {
+		$resolving_user_id = null;
+	}
+	if ( ! $authorized ) {
 		$state['error'] = new WP_Error( 'rest_oauth_invalid_token', __( 'The authorizing user may no longer use MCP.', 'mcp-oauth' ), array( 'status' => 401 ) );
 		return $user_id;
 	}
