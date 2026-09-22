@@ -14,6 +14,7 @@ namespace {
 	define( 'MINUTE_IN_SECONDS', 60 );
 	define( 'HOUR_IN_SECONDS', 3600 );
 	define( 'DAY_IN_SECONDS', 86400 );
+	define( 'ARRAY_A', 'ARRAY_A' );
 
 	if ( file_exists( __DIR__ . '/../vendor/autoload.php' ) ) {
 		require_once __DIR__ . '/../vendor/autoload.php';
@@ -153,7 +154,12 @@ namespace {
 	function is_user_logged_in() { return $GLOBALS['wp_test']['logged_in']; }
 	function get_current_user_id() { return $GLOBALS['wp_test']['user_id']; }
 	function current_user_can( $cap ) { return in_array( $cap, $GLOBALS['wp_test']['caps'], true ); }
-	function user_can( $user, $cap ) { return in_array( $cap, $GLOBALS['wp_test']['caps'], true ); }
+	function user_can( $user, $cap ) {
+		if ( isset( $GLOBALS['wp_test']['user_can_callback'] ) ) {
+			return (bool) $GLOBALS['wp_test']['user_can_callback']( $user, $cap );
+		}
+		return in_array( $cap, $GLOBALS['wp_test']['caps'], true );
+	}
 	function get_user_by( $field, $value ) { return $value > 0 ? (object) array( 'ID' => $value, 'user_login' => 'user' . $value, 'display_name' => 'User ' . $value ) : false; }
 	function is_wp_error( $thing ) { return $thing instanceof WP_Error; }
 	function is_admin() { return false; }

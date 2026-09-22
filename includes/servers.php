@@ -43,7 +43,7 @@ function register_adapter_category(): void {
 		return;
 	}
 	$adapter = \WP\MCP\Core\McpAdapter::instance();
-	if ( function_exists( 'wp_get_ability_category' ) && ! wp_get_ability_category( 'mcp-adapter' ) ) {
+	if ( function_exists( 'wp_has_ability_category' ) && ! wp_has_ability_category( 'mcp-adapter' ) ) {
 		$adapter->register_default_category();
 	}
 	remove_action( 'wp_abilities_api_categories_init', array( $adapter, 'register_default_category' ) );
@@ -57,7 +57,7 @@ function register_adapter_abilities(): void {
 		return;
 	}
 	$adapter = \WP\MCP\Core\McpAdapter::instance();
-	if ( function_exists( 'wp_get_ability' ) && ! wp_get_ability( 'mcp-adapter/discover-abilities' ) ) {
+	if ( function_exists( 'wp_has_ability' ) && ! wp_has_ability( 'mcp-adapter/discover-abilities' ) ) {
 		$adapter->register_default_abilities();
 	}
 	remove_action( 'wp_abilities_api_init', array( $adapter, 'register_default_abilities' ) );
