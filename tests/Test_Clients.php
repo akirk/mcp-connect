@@ -41,7 +41,7 @@ class Test_Clients extends TestCase {
 
 	public function test_catalog_covers_the_major_clients_with_usable_content(): void {
 		$catalog = Clients\catalog( 'https://example.com/wp-json/mcp/x' );
-		foreach ( array( 'claude-ai', 'claude-desktop', 'claude-code', 'chatgpt', 'codex', 'cursor', 'vscode', 'other' ) as $key ) {
+		foreach ( array( 'claude-ai', 'claude-desktop', 'claude-code', 'chatgpt-app', 'chatgpt-web', 'codex', 'cursor', 'vscode', 'other' ) as $key ) {
 			$this->assertArrayHasKey( $key, $catalog );
 			$this->assertNotEmpty( $catalog[ $key ]['name'] );
 			$this->assertTrue(

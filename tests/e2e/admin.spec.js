@@ -16,7 +16,7 @@ test( 'the Connect page shows the endpoint and a tab per client', async ( { admi
 	await adminPage.click( '.mcp-oauth-tab:has-text("Any other MCP client")' );
 	await expect( adminPage.locator( '#mcp-oauth-url' ) ).toHaveText( oauth.mcpUrl );
 	const tabs = await adminPage.locator( '.mcp-oauth-tab' ).allTextContents();
-	for ( const name of [ 'Claude.ai', 'Claude Desktop', 'Claude Code', 'ChatGPT', 'Cursor' ] ) {
+	for ( const name of [ 'Claude.ai', 'Claude Desktop', 'Claude Code', 'ChatGPT app', 'ChatGPT.com', 'Cursor' ] ) {
 		expect( tabs.map( ( t ) => t.trim() ) ).toContain( name );
 	}
 	await adminPage.click( '.mcp-oauth-tab:has-text("Claude.ai")' );
