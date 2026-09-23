@@ -86,11 +86,64 @@ class Test_Bearer extends TestCase {
 
 	public function test_malformed_bearer_is_rejected_with_401(): void {
 		$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer';
-		$this->assertNull( Middleware\resolve_bearer( null ) );
 		$error = Middleware\reject_invalid_bearer( null );
 		$this->assertInstanceOf( WP_Error::class, $error );
 		$this->assertSame( 'rest_oauth_invalid_token', $error->get_error_code() );
 		$this->assertSame( 401, $error->get_error_data()['status'] );
+	}
+
+	public function test_invalid_bearer_is_resolved_and_rejected_when_anonymous_user_is_already_cached(): void {
+		global $wpdb;
+
+		$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer unknown-token';
+		$GLOBALS['wp_test']['options']['mcp_oauth_schema_version'] = '1';
+		$wpdb = new class() {
+			public $prefix = 'wp_';
+
+			public function prepare( $query, ...$args ) {
+				return array( $query, $args );
+			}
+
+			public function get_row( $query, $output ) {
+				return null;
+			}
+		};
+
+		$error = Middleware\reject_invalid_bearer( null );
+		$this->assertInstanceOf( WP_Error::class, $error );
+		$this->assertSame( 'rest_oauth_invalid_token', $error->get_error_code() );
+	}
+
+	public function test_valid_bearer_is_resolved_when_anonymous_user_is_already_cached(): void {
+		global $wpdb;
+
+		$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer valid-token';
+		$GLOBALS['wp_test']['options']['mcp_oauth_schema_version'] = '1';
+		$GLOBALS['wp_test']['caps'] = array( 'read' );
+		$wpdb = new class() {
+			public $prefix = 'wp_';
+			public $updates = 0;
+
+			public function prepare( $query, ...$args ) {
+				return array( $query, $args );
+			}
+
+			public function get_row( $query, $output ) {
+				return array(
+					'token_hash' => hash( 'sha256', 'valid-token' ),
+					'user_id'    => 42,
+				);
+			}
+
+			public function update( $table, $data, $where ) {
+				++$this->updates;
+				return 1;
+			}
+		};
+
+		$this->assertTrue( Middleware\reject_invalid_bearer( null ) );
+		$this->assertSame( 42, get_current_user_id() );
+		$this->assertSame( 1, $wpdb->updates );
 	}
 
 	public function test_challenge_names_the_resource_metadata_and_scope(): void {

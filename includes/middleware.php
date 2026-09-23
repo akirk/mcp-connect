@@ -141,9 +141,19 @@ function resolve_bearer( $user_id ) {
  * @return WP_Error|true|null
  */
 function reject_invalid_bearer( $result ) {
-	$state = &state();
-	if ( null === $state['error'] ) {
+	if ( ! empty( $result ) ) {
 		return $result;
+	}
+
+	$state = &state();
+	if ( has_bearer_scheme() && null === $state['token'] && null === $state['error'] ) {
+		$user_id = resolve_bearer( get_current_user_id() );
+		if ( ! empty( $user_id ) && null !== $state['token'] ) {
+			wp_set_current_user( $user_id );
+		}
+	}
+	if ( null === $state['error'] ) {
+		return null !== $state['token'] ? true : $result;
 	}
 	$server = Servers\for_route( rest_route_of_request() );
 	if ( ! headers_sent() ) {
