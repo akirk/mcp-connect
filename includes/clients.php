@@ -143,17 +143,28 @@ function catalog( string $url ): array {
 			'command' => 'claude mcp add --transport http --scope user ' . sh( $key ) . ' ' . sh( $url ),
 			'hint'    => __( 'Run in a terminal, then type /mcp in Claude Code to sign in.', 'mcp-oauth' ),
 		),
-		'chatgpt'        => array(
-			'name'  => 'ChatGPT',
+		'chatgpt-app'    => array(
+			'name'  => 'ChatGPT app',
 			'cloud' => true,
 			'steps' => array(
-				__( 'In ChatGPT, open Settings → Apps & Connectors → Advanced settings and enable Developer mode.', 'mcp-oauth' ),
-				__( 'Go back to Apps & Connectors and choose “Create”.', 'mcp-oauth' ),
+				__( 'In the ChatGPT app, open Settings → Plugins → Add → Add MCP Server.', 'mcp-oauth' ),
 				/* translators: %s: connector name */
-				sprintf( __( 'Name it “%s”, paste the URL below as the MCP server URL and keep Authentication on OAuth.', 'mcp-oauth' ), $name ),
-				__( 'Confirm the warning about unverified apps, create the app, and sign in to this site when the browser opens.', 'mcp-oauth' ),
+				sprintf( __( 'Choose Streamable HTTP, name it “%s”, and paste the URL below as the MCP server URL.', 'mcp-oauth' ), $name ),
+				__( 'Choose OAuth authentication. You can leave the other fields empty, then add the MCP server.', 'mcp-oauth' ),
+				__( 'Go to Plugins → MCPs, click Authenticate, and sign in to this site when the browser opens.', 'mcp-oauth' ),
 			),
-			'note'  => __( 'Developer mode is required for apps OpenAI has not reviewed, which any connector to your own site always is.', 'mcp-oauth' ),
+		),
+		'chatgpt-web'    => array(
+			'name'  => 'ChatGPT.com',
+			'cloud' => true,
+			'steps' => array(
+				__( 'On chatgpt.com, open Settings → Security and Login and enable Developer Mode.', 'mcp-oauth' ),
+				__( 'Go to Plugins → + → Create App → Create MCP App.', 'mcp-oauth' ),
+				/* translators: %s: connector name */
+				sprintf( __( 'Choose Streamable HTTP, name it “%s”, and paste the URL below as the MCP server URL.', 'mcp-oauth' ), $name ),
+				__( 'Choose OAuth authentication. You can leave the other fields empty, then create the app.', 'mcp-oauth' ),
+				__( 'Go to Plugins → MCPs, click Authenticate, and sign in to this site when the browser opens.', 'mcp-oauth' ),
+			),
 		),
 		'codex'          => array(
 			'name'    => 'Codex CLI',
