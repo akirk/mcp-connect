@@ -285,6 +285,9 @@ function render_connect( $server, array $servers, string $url, bool $is_admin ):
 			<?php if ( ! empty( $client['note'] ) ) : ?>
 				<p class="description"><?php echo esc_html( $client['note'] ); ?></p>
 			<?php endif; ?>
+			<?php if ( ! empty( $client['docs_url'] ) ) : ?>
+				<p><a href="<?php echo esc_url( $client['docs_url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Official setup documentation', 'mcp-oauth' ); ?></a></p>
+			<?php endif; ?>
 		</div>
 	<?php endforeach; ?>
 	<?php
