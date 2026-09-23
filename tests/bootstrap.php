@@ -153,6 +153,7 @@ namespace {
 	function get_bloginfo( $show = '' ) { return 'name' === $show ? $GLOBALS['wp_test']['blogname'] : ''; }
 	function is_user_logged_in() { return $GLOBALS['wp_test']['logged_in']; }
 	function get_current_user_id() { return $GLOBALS['wp_test']['user_id']; }
+	function wp_set_current_user( $user_id ) { $GLOBALS['wp_test']['user_id'] = (int) $user_id; return get_user_by( 'id', $user_id ); }
 	function current_user_can( $cap ) { return in_array( $cap, $GLOBALS['wp_test']['caps'], true ); }
 	function user_can( $user, $cap ) {
 		if ( isset( $GLOBALS['wp_test']['user_can_callback'] ) ) {

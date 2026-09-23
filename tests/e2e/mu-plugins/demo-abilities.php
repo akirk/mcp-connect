@@ -18,6 +18,8 @@ add_filter(
 	}
 );
 
+add_action( 'plugins_loaded', 'wp_get_current_user', 10 );
+
 // Initialize the Abilities API registry early in every request, before the MCP Adapter hooks into
 // it, the way a site with other ability-registering plugins behaves.
 add_action(
