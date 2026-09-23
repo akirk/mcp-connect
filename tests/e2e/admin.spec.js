@@ -16,13 +16,14 @@ test( 'the Connect page shows the endpoint and a tab per client', async ( { admi
 	await adminPage.click( '.mcp-oauth-tab:has-text("Any other MCP client")' );
 	await expect( adminPage.locator( '#mcp-oauth-url' ) ).toHaveText( oauth.mcpUrl );
 	const tabs = await adminPage.locator( '.mcp-oauth-tab' ).allTextContents();
-	for ( const name of [ 'Claude.ai', 'Claude Desktop', 'Claude Code', 'ChatGPT app', 'ChatGPT.com', 'Cursor' ] ) {
+	for ( const name of [ 'Claude.ai', 'Claude Desktop', 'Claude Code', 'ChatGPT', 'Cursor' ] ) {
 		expect( tabs.map( ( t ) => t.trim() ) ).toContain( name );
 	}
 	await adminPage.click( '.mcp-oauth-tab:has-text("Claude.ai")' );
 	const link = adminPage.locator( '#mcp-oauth-client-claude-ai a.button-primary' );
 	await expect( link ).toHaveAttribute( 'href', /^https:\/\/claude\.ai\/customize\/connectors\?modal=add-custom-connector/ );
 	expect( await link.getAttribute( 'href' ) ).toContain( encodeURIComponent( oauth.mcpUrl ) );
+	await expect( adminPage.locator( '#mcp-oauth-client-claude-ai a:has-text("Official setup documentation")' ) ).toHaveAttribute( 'href', /support\.claude\.com/ );
 } );
 
 test( 'connections are listed and can be revoked', async ( { adminPage, oauth } ) => {

@@ -41,7 +41,7 @@ class Test_Clients extends TestCase {
 
 	public function test_catalog_covers_the_major_clients_with_usable_content(): void {
 		$catalog = Clients\catalog( 'https://example.com/wp-json/mcp/x' );
-		foreach ( array( 'claude-ai', 'claude-desktop', 'claude-code', 'chatgpt-app', 'chatgpt-web', 'codex', 'cursor', 'vscode', 'other' ) as $key ) {
+		foreach ( array( 'claude-ai', 'claude-desktop', 'claude-code', 'chatgpt-web', 'codex', 'cursor', 'vscode', 'other' ) as $key ) {
 			$this->assertArrayHasKey( $key, $catalog );
 			$this->assertNotEmpty( $catalog[ $key ]['name'] );
 			$this->assertTrue(
@@ -53,6 +53,24 @@ class Test_Clients extends TestCase {
 		$this->assertStringContainsString( "claude mcp add --transport http --scope user 'example-site' 'https://example.com/wp-json/mcp/x'", $catalog['claude-code']['command'] );
 		$this->assertSame( array( 'mcpServers' => array( 'example-site' => array( 'url' => 'https://example.com/wp-json/mcp/x' ) ) ), json_decode( $catalog['cursor']['snippet'], true ) );
 		$this->assertSame( 'http', json_decode( $catalog['vscode']['snippet'], true )['servers']['example-site']['type'] );
+	}
+
+	public function test_named_clients_link_to_docs_and_prefer_native_remote_oauth(): void {
+		$catalog = Clients\catalog( 'https://example.com/wp-json/mcp/x' );
+		foreach ( $catalog as $key => $client ) {
+			if ( 'other' === $key ) {
+				continue;
+			}
+			$this->assertArrayHasKey( 'docs_url', $client, "$key links to its setup documentation" );
+			$this->assertStringStartsWith( 'https://', $client['docs_url'] );
+		}
+
+		$this->assertSame( 'https://example.com/wp-json/mcp/x', json_decode( $catalog['zed']['snippet'], true )['context_servers']['example-site']['url'] );
+		$this->assertSame( 'streamableHttp', json_decode( $catalog['cline']['snippet'], true )['mcpServers']['example-site']['type'] );
+		$this->assertSame( 'remote', json_decode( $catalog['opencode']['snippet'], true )['mcp']['example-site']['type'] );
+		$this->assertArrayNotHasKey( 'bridge', $catalog['zed'] );
+		$this->assertArrayNotHasKey( 'bridge', $catalog['cline'] );
+		$this->assertArrayNotHasKey( 'bridge', $catalog['opencode'] );
 	}
 
 	public function test_cloud_reachability_heuristics(): void {
