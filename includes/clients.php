@@ -147,13 +147,13 @@ function catalog( string $url ): array {
 			'name'  => 'ChatGPT',
 			'cloud' => true,
 			'steps' => array(
-				__( 'In ChatGPT, open Settings → Apps & Connectors → Advanced settings and enable Developer mode.', 'mcp-oauth' ),
-				__( 'Go back to Apps & Connectors and choose “Create”.', 'mcp-oauth' ),
+				__( 'On chatgpt.com, open Settings → Security and Login and enable Developer Mode.', 'mcp-oauth' ),
+				__( 'Go to Plugins → + → Create App → Create MCP App.', 'mcp-oauth' ),
 				/* translators: %s: connector name */
-				sprintf( __( 'Name it “%s”, paste the URL below as the MCP server URL and keep Authentication on OAuth.', 'mcp-oauth' ), $name ),
-				__( 'Confirm the warning about unverified apps, create the app, and sign in to this site when the browser opens.', 'mcp-oauth' ),
+				sprintf( __( 'Choose Streamable HTTP, name it “%s”, and paste the URL below as the MCP server URL.', 'mcp-oauth' ), $name ),
+				__( 'Choose OAuth authentication. You can leave the other fields empty, then add the MCP server.', 'mcp-oauth' ),
+				__( 'Go to Plugins → MCPs, click Authenticate, and sign in to this site when the browser opens.', 'mcp-oauth' ),
 			),
-			'note'  => __( 'Developer mode is required for apps OpenAI has not reviewed, which any connector to your own site always is.', 'mcp-oauth' ),
 		),
 		'codex'          => array(
 			'name'    => 'Codex CLI',
