@@ -1,6 +1,6 @@
 const { test, expect } = require( './fixtures' );
 
-const WEBMCP = '/wp-admin/tools.php?page=mcp-connect&tab=webmcp';
+const CONNECT = '/wp-admin/tools.php?page=mcp-connect&tab=connect';
 const ABILITIES = '/wp-admin/tools.php?page=mcp-connect&tab=abilities';
 
 async function mockWebMCP( page, legacy = false ) {
@@ -18,7 +18,8 @@ async function mockWebMCP( page, legacy = false ) {
 for ( const legacy of [ false, true ] ) {
 	test( `WebMCP registers and executes abilities through ${ legacy ? 'provideContext' : 'registerTool' }`, async ( { adminPage } ) => {
 		await mockWebMCP( adminPage, legacy );
-		await adminPage.goto( WEBMCP );
+		await adminPage.goto( CONNECT );
+		await adminPage.locator( '[data-target="mcp-oauth-client-browser"]' ).click();
 		await expect.poll( () => adminPage.evaluate( () => Object.keys( window.webmcpTools ) ) ).toContain( 'demo_list-trips' );
 		const names = await adminPage.evaluate( () => Object.keys( window.webmcpTools ) );
 		expect( names ).not.toContain( 'demo_opted-out' );
@@ -30,10 +31,11 @@ for ( const legacy of [ false, true ] ) {
 }
 
 test( 'the shared Abilities list uses one visibility control for MCP and WebMCP', async ( { adminPage, request } ) => {
-	await adminPage.goto( WEBMCP );
+	await adminPage.goto( CONNECT );
+	await adminPage.locator( '[data-target="mcp-oauth-client-browser"]' ).click();
 	await expect( adminPage.locator( 'tr[data-ability]' ), 'WebMCP settings do not repeat the ability list' ).toHaveCount( 0 );
 	await adminPage.goto( ABILITIES );
-	await expect( adminPage.locator( '.mcp-oauth-scroll thead th' ) ).toHaveText( [ 'Ability', 'What it does' ] );
+	await expect( adminPage.locator( '#mcp-oauth-abilities-table thead th' ) ).toHaveText( [ 'Ability', 'What it does' ] );
 	await adminPage.locator( '#mcp-oauth-ability-search' ).fill( 'list trips' );
 	await expect( adminPage.locator( '.mcp-oauth-ability:visible' ) ).toHaveCount( 1 );
 	await adminPage.locator( '#mcp-oauth-ability-search' ).fill( 'no-such-ability' );
@@ -67,7 +69,8 @@ test( 'the shared Abilities list uses one visibility control for MCP and WebMCP'
 	const deniedToggle = await request.post( '/wp-json/webmcp/v1/abilities/visibility', { data: { ability: 'demo/list-trips', hide: true } } );
 	expect( deniedToggle.status() ).toBe( 401 );
 
-	await adminPage.goto( WEBMCP );
+	await adminPage.goto( CONNECT );
+	await adminPage.locator( '[data-target="mcp-oauth-client-browser"]' ).click();
 	await adminPage.locator( '#wmcp_enabled' ).uncheck();
 	await adminPage.locator( '#submit' ).click();
 	await expect( adminPage.locator( '#wmcp_enabled' ) ).not.toBeChecked();
@@ -78,8 +81,11 @@ test( 'the shared Abilities list uses one visibility control for MCP and WebMCP'
 } );
 
 test( 'logged-out discovery has no admin switch', async ( { adminPage, request } ) => {
-	await adminPage.goto( WEBMCP );
+	await adminPage.goto( CONNECT );
+	await adminPage.locator( '[data-target="mcp-oauth-client-browser"]' ).click();
 	await expect( adminPage.locator( '#wmcp_discovery_public' ) ).toHaveCount( 0 );
+	await expect( adminPage.locator( 'a[href="https://github.com/code-atlantic/webmcp-abilities"]' ) ).toHaveCount( 0 );
+	await expect( adminPage.locator( '#mcp-oauth-client-browser' ) ).not.toContainText( 'Registered abilities:' );
 	expect( ( await request.get( '/wp-json/webmcp/v1/tools' ) ).status() ).toBe( 401 );
 	expect( ( await request.post( '/wp-json/webmcp/v1/abilities/anonymous', { data: { ability: 'wp/search-posts', anonymous: true } } ) ).status() ).toBe( 404 );
 } );
@@ -108,8 +114,9 @@ test( 'the anonymous filter enables both protocols while ability permissions sti
 
 test( 'the standalone WebMCP plugin owns registration when both are active', async ( { adminPage } ) => {
 	test.skip( ! process.env.WEBMCP_PLUGIN_DIR, 'Requires the standalone WebMCP plugin fixture.' );
-	await adminPage.goto( WEBMCP );
-	await expect( adminPage.locator( '.nav-tab-active' ) ).toHaveText( 'WebMCP' );
+	await adminPage.goto( CONNECT );
+	await adminPage.locator( '[data-target="mcp-oauth-client-browser"]' ).click();
+	await expect( adminPage.locator( '.nav-tab-active' ) ).toHaveText( 'Connect' );
 	await expect( adminPage.locator( 'script[src*="/webmcp-abilities/dist/webmcp-abilities.js"]' ) ).toHaveCount( 1 );
 	await expect( adminPage.locator( 'script[src*="/mcp-connect/assets/webmcp.js"]' ) ).toHaveCount( 0 );
 	const config = await adminPage.evaluate( () => window.wmcpBridge );

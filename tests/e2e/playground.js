@@ -46,7 +46,7 @@ if ( standalone ) {
 		mounts.push( path.resolve( process.env.MCP_ADAPTER_DIR ) + ':/wordpress/wp-content/plugins/mcp-adapter' );
 	} else {
 		// The MCP Adapter is not on wordpress.org; its GitHub releases ship a built zip (with vendor/).
-		const zip = process.env.MCP_ADAPTER_ZIP || 'https://github.com/WordPress/mcp-adapter/releases/latest/download/mcp-adapter.zip';
+		const zip = process.env.MCP_ADAPTER_ZIP || 'https://github.com/WordPress/mcp-adapter/releases/download/v0.7.0/mcp-adapter.zip';
 		steps.push( { step: 'installPlugin', pluginData: { resource: 'url', url: zip }, options: { activate: false, targetFolderName: 'mcp-adapter' } } );
 	}
 	steps.push( { step: 'activatePlugin', pluginPath: 'mcp-adapter/mcp-adapter.php' } );

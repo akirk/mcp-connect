@@ -3,6 +3,7 @@
  * Main plugin class.
  *
  * Adapted from WebMCP Abilities 0.8.0 by Code Atlantic (GPL-2.0-or-later).
+ * Source: https://github.com/code-atlantic/webmcp-abilities
  *
  * @package mcp-connect
  */

@@ -305,6 +305,10 @@ function anonymous_request( WP_REST_Request $request ): \WP_REST_Response {
 	if ( 'POST' !== $request->get_method() ) {
 		return new \WP_REST_Response( null, 405 );
 	}
+	$server = Servers\for_route( $request->get_route() );
+	if ( method_exists( $server, 'get_schemas' ) ) {
+		return anonymous_schema_request( $request, $server );
+	}
 	$body = $request->get_json_params();
 	if ( ! is_array( $body ) || ! isset( $body['jsonrpc'] ) ) {
 		return new \WP_REST_Response( \WP\MCP\Infrastructure\ErrorHandling\McpErrorFactory::invalid_request( null, 'Expected a JSON-RPC request.' )->toArray(), 400 );
@@ -329,4 +333,45 @@ function anonymous_request( WP_REST_Request $request ): \WP_REST_Response {
 		$response = \WP\MCP\Transport\Infrastructure\JsonRpcResponseBuilder::create_success_response( $body['id'], $result );
 	}
 	return new \WP_REST_Response( $response );
+}
+
+/**
+ * Use the adapter 0.7 wire boundary for stateless anonymous requests.
+ *
+ * @param WP_REST_Request             $request Request.
+ * @param \WP\MCP\Core\McpServer $server Server.
+ * @return \WP_REST_Response
+ */
+function anonymous_schema_request( WP_REST_Request $request, $server ): \WP_REST_Response {
+	$factory = new \WP\MCP\Core\McpTransportFactory( $server );
+	$wire = new \WP\MCP\Transport\Infrastructure\McpWireOrchestrator( $factory->create_transport_context() );
+	try {
+		$message = $wire->decode( $request->get_body() );
+	} catch ( \Throwable $error ) {
+		return new \WP_REST_Response( \WP\MCP\Infrastructure\ErrorHandling\McpErrorFactory::parse_error( null, $error->getMessage() ), 400 );
+	}
+	$version = $request->get_header( 'MCP-Protocol-Version' ) ?: '2025-11-25';
+	$processed = $wire->process(
+		$message,
+		'HTTP',
+		array(
+			'protocol_version' => $version,
+			'headers'          => $request->get_headers(),
+		),
+		array(
+			'protocolVersion' => $version,
+			'capabilities'    => array(),
+			'clientInfo'      => array(
+				'name'    => 'anonymous',
+				'version' => '1',
+			),
+		)
+	);
+	if ( null === $processed['response'] ) {
+		return new \WP_REST_Response( null, 202 );
+	}
+	$result = $processed['response'];
+	$data = $result instanceof \WP\McpSchema\Record ? $result->jsonSerialize() : $result;
+	$status = $wire->http_response_status( $result, $processed['context'], $message, $version );
+	return new \WP_REST_Response( $processed['notification'] ? null : $data, $status );
 }

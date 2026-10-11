@@ -3,7 +3,6 @@ const { test, expect } = require( './fixtures' );
 
 const CONNECT = '/wp-admin/tools.php?page=mcp-connect';
 const ABILITIES = CONNECT + '&tab=abilities';
-const TOOLS = CONNECT + '&tab=tools';
 const CONNECTIONS = CONNECT + '&tab=connections';
 
 test( 'the Connect page shows the endpoint and a tab per client', async ( { adminPage, oauth } ) => {
@@ -43,7 +42,7 @@ test( 'abilities are exposed by default and can be hidden with the eye toggle', 
 	expect( await oauth.discoverAbilities( tokens.access_token ), 'meta.mcp.public=false stays hidden' ).not.toContain( 'demo/opted-out' );
 
 	await adminPage.goto( ABILITIES );
-	await expect( adminPage.locator( 'tr[data-ability="mcp-adapter/discover-abilities"]' ), 'internal tools are kept on the Tools tab' ).toHaveCount( 0 );
+	await expect( adminPage.locator( 'tr[data-ability="mcp-adapter/discover-abilities"]' ), 'internal tools are kept in troubleshooting details' ).toHaveCount( 0 );
 	const row = adminPage.locator( 'tr[data-ability="demo/list-trips"]' );
 	const eye = row.locator( '.mcp-oauth-eye' );
 	await expect( adminPage.locator( 'tr[data-ability="demo/opted-out"] .mcp-oauth-eye' ), 'opted-out abilities have no toggle' ).toHaveCount( 0 );
@@ -96,8 +95,10 @@ test( 'abilities can be promoted to tools of their own with the Tool checkbox', 
 	expect( await oauth.listTools( tokens.access_token ), 'back to the meta-tools alone' ).not.toContain( 'demo-list-trips' );
 } );
 
-test( 'the Tools tab shows what the server hands to a client', async ( { adminPage } ) => {
-	await adminPage.goto( TOOLS );
+test( 'MCP inventory is available under collapsed troubleshooting details', async ( { adminPage } ) => {
+	await adminPage.goto( ABILITIES );
+	await expect( adminPage.locator( '.nav-tab-wrapper a' ) ).toHaveText( [ 'Connect', 'Abilities', 'Connections' ] );
+	await adminPage.locator( '#mcp-oauth-tool-inventory > summary' ).click();
 	for ( const meta of [ 'discover-abilities', 'get-ability-info', 'execute-ability' ] ) {
 		const row = adminPage.locator( `tr[data-tool="mcp-adapter-${ meta }"]` );
 		await expect( row, 'the meta-tools are always listed' ).toContainText( `mcp-adapter/${ meta }` );
@@ -110,7 +111,9 @@ test( 'the Tools tab shows what the server hands to a client', async ( { adminPa
 	await adminPage.locator( 'tr[data-ability="demo/list-trips"] .mcp-oauth-tool' ).check();
 	await promote;
 
-	await adminPage.goto( TOOLS );
+	await adminPage.goto( ABILITIES );
+	await expect( adminPage.locator( '.nav-tab-wrapper a' ) ).toHaveText( [ 'Connect', 'Abilities', 'Connections' ] );
+	await adminPage.locator( '#mcp-oauth-tool-inventory > summary' ).click();
 	const row = adminPage.locator( 'tr[data-tool="demo-list-trips"]' );
 	await expect( row, 'the ability behind the tool is named' ).toContainText( 'demo/list-trips' );
 	await expect( row, 'and its description comes along' ).toContainText( 'Lists demo trips.' );

@@ -43,7 +43,7 @@ Update or remove the standalone plugin at will — MCP Connect keeps working eit
 
 MCP Connect also exposes WordPress abilities to AI agents visiting the site through the [WebMCP browser API](https://github.com/webmachinelearning/webmcp). It registers tools on the front end and in wp-admin, using `document.modelContext.registerTool()` with fallbacks for older browser implementations. Browsers without WebMCP support simply skip registration. HTTPS or a browser-trusted loopback origin is required.
 
-The **Abilities** tab under **Tools → MCP Connect** has one searchable list with descriptions and one hide/show choice for both MCP and WebMCP. Technical details and MCP direct-tool shortcuts are collapsed by default. The **WebMCP** tab enables the browser bridge and reports its status. Every execution checks the current user's permissions and input schema. Signed-in browser requests also require a security nonce. Hidden abilities and abilities explicitly opted out with `meta.mcp.public = false` or `wmcp_visibility = private` remain unavailable through both protocols.
+The **Abilities** tab under **Tools → MCP Connect** has one searchable list with descriptions and one hide/show choice for both MCP and WebMCP. Technical details and MCP direct-tool shortcuts are collapsed by default. The **Connect** tab includes **Browser (WebMCP)** alongside remote client setup. The MCP tool inventory is available in collapsed troubleshooting details on Abilities. Every execution checks the current user's permissions and input schema. Signed-in browser requests also require a security nonce. Hidden abilities and abilities explicitly opted out with `meta.mcp.public = false` or `wmcp_visibility = private` remain unavailable through both protocols.
 
 Logged-out access is disabled and has no admin setting. To explicitly enable it for both protocols, use:
 
@@ -65,7 +65,7 @@ All of them, unless an ability opts out with `meta.mcp.public = false`. The MCP 
 
 By default the way the MCP Adapter presents them: through the three meta-tools its default server registers — `discover-abilities`, `get-ability-info` and `execute-ability` — so a client names an ability in a string and gets to it in two calls. That keeps the tool list short on a site with a hundred abilities, at the cost of a round trip and a schema the client never sees.
 
-Tick **Expose as MCP tool** next to an ability on the MCP Connect page to also register it as a tool in its own right, with its own name, description and input schema, so a client calls it in a single step. The meta-tools stay either way, so nothing becomes unreachable — promotion is for the handful of abilities worth spending a client's tool budget on. The `mcp_oauth_direct_tools` filter sets the promoted list in code, and `mcp_oauth_tools` has the final say over what the server registers.
+Open an ability’s **Details** and enable **Direct tool** on the Abilities tab to also register it as a tool in its own right, with its own name, description and input schema, so a client calls it in a single step. The meta-tools stay either way, so nothing becomes unreachable — promotion is for the handful of abilities worth spending a client's tool budget on. The `mcp_oauth_direct_tools` filter sets the promoted list in code, and `mcp_oauth_tools` has the final say over what the server registers.
 
 The OAuth endpoints are only exposed on HTTPS sites (and local environments).
 
@@ -75,6 +75,7 @@ The OAuth endpoints are only exposed on HTTPS sites (and local environments).
 - `mcp_oauth_redirect_uri_schemes` — custom URL schemes accepted as redirect URIs for native apps.
 - `mcp_oauth_transport_allowed` — override the HTTPS requirement.
 - `mcp_oauth_hidden_abilities` — ability names hidden from clients.
+- `mcp_oauth_allow_anonymous_access` — explicitly enable logged-out access through both protocols (default `false`).
 - `mcp_oauth_direct_tools` — ability names exposed as tools of their own.
 - `mcp_oauth_tools` — the final tool list of the default MCP server, given the adapter's meta-tools and the promoted abilities as further arguments.
 - `mcp_oauth_registration_limits` — per-address limits on anonymous client registration (`per_hour`, `max_clients`).
@@ -92,7 +93,7 @@ npm run test:e2e          # Playwright Test; boots WordPress with wp-playground-
 
 `vendor/` holds the bundled MCP Adapter and is not committed, so a checkout needs `composer install` before it runs. What ships is built by CI: every push produces a `dist/<branch>` branch with the production dependencies installed (`.github/workflows/build-dist.yml`), which is what the Playground link above installs and what a release would be built from.
 
-The e2e suite runs against the bundled adapter. Set `MCP_ADAPTER_PLUGIN=1` to also install the standalone MCP Adapter plugin from its latest GitHub release and exercise the two side by side — `MCP_ADAPTER_ZIP=<url>` picks another release, `MCP_ADAPTER_DIR=/path/to/mcp-adapter` mounts a local checkout instead (works offline). Set `PLAYGROUND_URL` to run the specs against a site that is already running (`npx playwright test --ui` works too). All of it runs in GitHub Actions on every push, with the e2e suite covering both the bundled and the standalone adapter.
+The e2e suite runs against the bundled adapter. Set `MCP_ADAPTER_PLUGIN=1` to also install the standalone MCP Adapter plugin from the pinned 0.7.0 GitHub release and exercise the two side by side — `MCP_ADAPTER_ZIP=<url>` picks another release, `MCP_ADAPTER_DIR=/path/to/mcp-adapter` mounts a local checkout instead (works offline). Set `PLAYGROUND_URL` to run the specs against a site that is already running (`npx playwright test --ui` works too). All of it runs in GitHub Actions on every push, with the e2e suite covering both the bundled and the standalone adapter.
 
 ## Changelog
 

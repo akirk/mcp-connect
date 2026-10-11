@@ -116,13 +116,12 @@ function render(): void {
 	$tabs     = array(
 		'connect'     => __( 'Connect', 'mcp-oauth' ),
 		'abilities'   => __( 'Abilities', 'mcp-oauth' ),
-		'tools'       => __( 'Tools', 'mcp-oauth' ),
 		'connections' => __( 'Connections', 'mcp-oauth' ),
 	);
-	if ( $is_admin ) {
-		$tabs['webmcp'] = __( 'WebMCP', 'mcp-oauth' );
-	}
 	$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'connect'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( 'tools' === $tab ) {
+		$tab = 'abilities';
+	}
 	if ( ! isset( $tabs[ $tab ] ) ) {
 		$tab = 'connect';
 	}
@@ -165,17 +164,14 @@ function render(): void {
 			<div class="notice notice-warning inline"><p><?php esc_html_e( 'No MCP server is registered. The MCP Adapter’s default server is missing — check the mcp_adapter_create_default_server filter.', 'mcp-oauth' ); ?></p></div>
 		<?php endif; ?>
 
-		<?php if ( 'connect' === $tab && $server && \MCP_OAuth\transport_allowed() ) : ?>
-			<?php render_connect( $server, $servers, $url, $is_admin ); ?>
+		<?php if ( 'connect' === $tab ) : ?>
+			<?php if ( $server && \MCP_OAuth\transport_allowed() ) : ?>
+				<?php render_connect( $server, $servers, $url, $is_admin ); ?>
+			<?php else : ?>
+				<?php render_browser_connection( $is_admin ); ?>
+			<?php endif; ?>
 		<?php elseif ( 'abilities' === $tab ) : ?>
 			<?php render_abilities( $is_admin ); ?>
-		<?php elseif ( 'tools' === $tab && \MCP_OAuth\adapter_available() ) : ?>
-			<?php render_tools( $servers ); ?>
-		<?php elseif ( 'webmcp' === $tab && $is_admin ) : ?>
-			<?php
-			$webmcp = \MCP_OAuth\WebMCP\Plugin::instance();
-			( new \MCP_OAuth\WebMCP\Admin_Page( $webmcp->settings, $webmcp->bridge ) )->render_page();
-			?>
 		<?php elseif ( 'connections' === $tab ) : ?>
 			<?php render_connections( $is_admin ); ?>
 		<?php endif; ?>
@@ -208,7 +204,7 @@ function render_connect( $server, array $servers, string $url, bool $is_admin ):
 	<?php endif; ?>
 
 	<p style="margin-top:16px">
-		<?php esc_html_e( 'For your convenience, here are some common AI agents that can use your WordPress through MCP. Each signs in to this site through your browser; no password is copied anywhere.', 'mcp-oauth' ); ?>
+		<?php esc_html_e( 'Choose how your AI assistant connects. Remote clients sign in through your browser; browser assistants can use WebMCP on this site.', 'mcp-oauth' ); ?>
 		<?php if ( $is_admin ) : ?>
 			<?php
 			printf(
@@ -226,6 +222,7 @@ function render_connect( $server, array $servers, string $url, bool $is_admin ):
 		<?php foreach ( Clients\catalog( $url ) as $id => $client ) : ?>
 			<button type="button" role="tab" class="mcp-oauth-tab" data-target="mcp-oauth-client-<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $client['name'] ); ?></button>
 		<?php endforeach; ?>
+		<button type="button" role="tab" class="mcp-oauth-tab" data-target="mcp-oauth-client-browser"><?php esc_html_e( 'Browser (WebMCP)', 'mcp-oauth' ); ?></button>
 	</div>
 	<?php foreach ( Clients\catalog( $url ) as $id => $client ) : ?>
 		<div class="mcp-oauth-client card" id="mcp-oauth-client-<?php echo esc_attr( $id ); ?>" hidden>
@@ -301,6 +298,37 @@ function render_connect( $server, array $servers, string $url, bool $is_admin ):
 			<?php endif; ?>
 		</div>
 	<?php endforeach; ?>
+	<div class="mcp-oauth-client card" id="mcp-oauth-client-browser" hidden>
+		<?php render_browser_connection( $is_admin ); ?>
+	</div>
+	<?php
+}
+
+/**
+ * Browser connection instructions and the site-wide bridge setting.
+ *
+ * @param bool $is_admin Whether the viewer can change settings.
+ */
+function render_browser_connection( bool $is_admin ): void {
+	$settings = \MCP_OAuth\WebMCP\Plugin::instance()->settings;
+	?>
+	<h3><?php esc_html_e( 'Browser (WebMCP)', 'mcp-oauth' ); ?></h3>
+	<p><?php esc_html_e( 'Open this site in a browser with WebMCP support. Its AI assistant can use the available abilities as the current visitor, without adding an MCP server URL.', 'mcp-oauth' ); ?></p>
+	<p><?php esc_html_e( 'Choose which abilities are available on the Abilities tab. Their WordPress permission checks apply to browser assistants too.', 'mcp-oauth' ); ?></p>
+	<?php if ( class_exists( '\WebMCP\Plugin', false ) ) : ?>
+		<p><?php esc_html_e( 'The standalone WebMCP Abilities plugin currently provides the browser connection. Deactivate it to use the connection included here.', 'mcp-oauth' ); ?></p>
+	<?php endif; ?>
+	<?php if ( ! \MCP_OAuth\WebMCP\Secure_Context::is_available() ) : ?>
+		<p><?php esc_html_e( 'Browser connections require HTTPS or a local loopback address.', 'mcp-oauth' ); ?></p>
+	<?php endif; ?>
+	<?php if ( $is_admin ) : ?>
+		<form method="post" action="options.php">
+			<?php settings_fields( 'mcp_connect_webmcp' ); ?>
+			<input type="hidden" name="wmcp_enabled" value="0">
+			<p><label><input type="checkbox" name="wmcp_enabled" id="wmcp_enabled" value="1"<?php checked( $settings->is_enabled() ); ?>> <?php esc_html_e( 'Enable browser connections through WebMCP', 'mcp-oauth' ); ?></label></p>
+			<?php submit_button( __( 'Save browser setting', 'mcp-oauth' ), 'secondary' ); ?>
+		</form>
+	<?php endif; ?>
 	<?php
 }
 
@@ -428,7 +456,7 @@ function render_abilities( bool $is_admin ): void {
 		<span class="description"><strong id="mcp-oauth-visible-count"><?php echo (int) $visible; ?></strong> <?php esc_html_e( 'available', 'mcp-oauth' ); ?></span>
 	</div>
 	<div class="mcp-oauth-scroll">
-	<table class="widefat striped" style="max-width:1100px">
+	<table id="mcp-oauth-abilities-table" class="widefat striped" style="max-width:1100px">
 		<thead>
 			<tr>
 				<th class="mcp-oauth-ability-column"><?php esc_html_e( 'Ability', 'mcp-oauth' ); ?></th>
@@ -471,6 +499,12 @@ function render_abilities( bool $is_admin ): void {
 		<p><strong id="mcp-oauth-direct-count"><?php echo (int) $direct; ?></strong> <?php esc_html_e( 'direct MCP tools', 'mcp-oauth' ); ?></p>
 		<p><?php esc_html_e( 'The eye controls whether an ability is available through MCP and WebMCP. Both protocols use the same abilities and WordPress permissions. In Details, Direct tool adds a shortcut for MCP clients.', 'mcp-oauth' ); ?></p>
 	</details>
+	<?php if ( \MCP_OAuth\adapter_available() ) : ?>
+		<details class="mcp-oauth-ability-help" id="mcp-oauth-tool-inventory">
+			<summary><?php esc_html_e( 'MCP client tool list', 'mcp-oauth' ); ?></summary>
+			<?php render_tools( Servers\all() ); ?>
+		</details>
+	<?php endif; ?>
 	<?php
 }
 
@@ -485,15 +519,7 @@ function render_abilities( bool $is_admin ): void {
 function render_tools( array $servers ): void {
 	?>
 	<h2 id="tools"><?php esc_html_e( 'Tools exposed to connected clients', 'mcp-oauth' ); ?></h2>
-	<p style="max-width:60em">
-		<?php
-		printf(
-			/* translators: %s: link to the Abilities tab */
-			esc_html__( 'This is what a client receives when it asks the server what it can do. The three mcp-adapter tools are how it reaches every exposed ability by name; the rest are abilities promoted to tools of their own on the %s tab.', 'mcp-oauth' ),
-			'<a href="' . esc_url( page_url( array( 'tab' => 'abilities' ) ) ) . '">' . esc_html__( 'Abilities', 'mcp-oauth' ) . '</a>'
-		);
-		?>
-	</p>
+	<p><?php esc_html_e( 'For troubleshooting: this is the MCP tool inventory advertised to connected clients. The adapter’s helper tools discover and execute available abilities; direct tools provide shortcuts to individual abilities.', 'mcp-oauth' ); ?></p>
 	<?php if ( ! $servers ) : ?>
 		<p><?php esc_html_e( 'No MCP server is registered.', 'mcp-oauth' ); ?></p>
 		<?php return; ?>

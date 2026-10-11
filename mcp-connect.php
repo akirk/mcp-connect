@@ -62,7 +62,7 @@ require MCP_OAUTH_DIR . 'includes/health.php';
 require MCP_OAUTH_DIR . 'includes/clients.php';
 require MCP_OAUTH_DIR . 'includes/admin.php';
 
-foreach ( array( 'secure-context', 'rate-limiter', 'settings', 'ability-bridge', 'builtin-tools', 'rest-api', 'admin-page', 'plugin' ) as $webmcp_component ) {
+foreach ( array( 'secure-context', 'rate-limiter', 'settings', 'ability-bridge', 'builtin-tools', 'rest-api', 'plugin' ) as $webmcp_component ) {
 	require_once MCP_OAUTH_DIR . 'includes/webmcp/class-' . $webmcp_component . '.php';
 }
 
