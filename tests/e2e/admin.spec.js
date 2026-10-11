@@ -16,7 +16,7 @@ test( 'the Connect page shows the endpoint and a tab per client', async ( { admi
 	await adminPage.click( '.mcp-oauth-tab:has-text("Any other MCP client")' );
 	await expect( adminPage.locator( '#mcp-oauth-url' ) ).toHaveText( oauth.mcpUrl );
 	const tabs = await adminPage.locator( '.mcp-oauth-tab' ).allTextContents();
-	for ( const name of [ 'Claude.ai', 'Claude Desktop', 'Claude Code', 'ChatGPT', 'Cursor' ] ) {
+	for ( const name of [ 'Claude.ai', 'Claude Desktop', 'Claude Code', 'ChatGPT', 'Cursor', 'Browser (WebMCP)' ] ) {
 		expect( tabs.map( ( t ) => t.trim() ) ).toContain( name );
 	}
 	await adminPage.click( '.mcp-oauth-tab:has-text("Claude.ai")' );
@@ -102,7 +102,7 @@ test( 'abilities can be promoted to tools of their own with the explained tool-l
 
 test( 'MCP inventory is available under collapsed troubleshooting details', async ( { adminPage } ) => {
 	await adminPage.goto( ABILITIES );
-	await expect( adminPage.locator( '.nav-tab-wrapper a' ) ).toHaveText( [ 'Connect', 'Abilities', 'Connections', 'WebMCP' ] );
+	await expect( adminPage.locator( '.nav-tab-wrapper a' ) ).toHaveText( [ 'Connect', 'Abilities', 'Connections' ] );
 	await adminPage.locator( '#mcp-oauth-tool-inventory > summary' ).click();
 	for ( const meta of [ 'discover-abilities', 'get-ability-info', 'execute-ability' ] ) {
 		const row = adminPage.locator( `tr[data-tool="mcp-adapter-${ meta }"]` );
@@ -117,7 +117,7 @@ test( 'MCP inventory is available under collapsed troubleshooting details', asyn
 	await promote;
 
 	await adminPage.goto( ABILITIES );
-	await expect( adminPage.locator( '.nav-tab-wrapper a' ) ).toHaveText( [ 'Connect', 'Abilities', 'Connections', 'WebMCP' ] );
+	await expect( adminPage.locator( '.nav-tab-wrapper a' ) ).toHaveText( [ 'Connect', 'Abilities', 'Connections' ] );
 	await adminPage.locator( '#mcp-oauth-tool-inventory > summary' ).click();
 	const row = adminPage.locator( 'tr[data-tool="demo-list-trips"]' );
 	await expect( row, 'the ability behind the tool is named' ).toContainText( 'demo/list-trips' );

@@ -118,9 +118,6 @@ function render(): void {
 		'abilities'   => __( 'Abilities', 'mcp-oauth' ),
 		'connections' => __( 'Connections', 'mcp-oauth' ),
 	);
-	if ( $is_admin ) {
-		$tabs['webmcp'] = __( 'WebMCP', 'mcp-oauth' );
-	}
 	$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'connect'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( 'tools' === $tab ) {
 		$tab = 'abilities';
@@ -172,8 +169,6 @@ function render(): void {
 			<?php endif; ?>
 		<?php elseif ( 'abilities' === $tab ) : ?>
 			<?php render_abilities( $is_admin ); ?>
-		<?php elseif ( 'webmcp' === $tab && $is_admin ) : ?>
-			<?php render_browser_connection( $is_admin ); ?>
 		<?php elseif ( 'connections' === $tab ) : ?>
 			<?php render_connections( $is_admin ); ?>
 		<?php endif; ?>
@@ -206,7 +201,7 @@ function render_connect( $server, array $servers, string $url, bool $is_admin ):
 	<?php endif; ?>
 
 	<p style="margin-top:16px">
-		<?php esc_html_e( 'Choose your AI client. Each signs in to this site through your browser.', 'mcp-oauth' ); ?>
+		<?php esc_html_e( 'Choose how your AI assistant connects. Remote clients sign in through your browser; browser assistants can use WebMCP on this site.', 'mcp-oauth' ); ?>
 		<?php if ( $is_admin ) : ?>
 			<?php
 			printf(
@@ -224,6 +219,7 @@ function render_connect( $server, array $servers, string $url, bool $is_admin ):
 		<?php foreach ( Clients\catalog( $url ) as $id => $client ) : ?>
 			<button type="button" role="tab" class="mcp-oauth-tab" data-target="mcp-oauth-client-<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $client['name'] ); ?></button>
 		<?php endforeach; ?>
+		<button type="button" role="tab" class="mcp-oauth-tab" data-target="mcp-oauth-client-browser"><?php esc_html_e( 'Browser (WebMCP)', 'mcp-oauth' ); ?></button>
 	</div>
 	<?php foreach ( Clients\catalog( $url ) as $id => $client ) : ?>
 		<div class="mcp-oauth-client card" id="mcp-oauth-client-<?php echo esc_attr( $id ); ?>" hidden>
@@ -299,6 +295,9 @@ function render_connect( $server, array $servers, string $url, bool $is_admin ):
 			<?php endif; ?>
 		</div>
 	<?php endforeach; ?>
+	<div class="mcp-oauth-client card" id="mcp-oauth-client-browser" hidden>
+		<?php render_browser_connection( $is_admin ); ?>
+	</div>
 	<?php
 }
 
@@ -310,7 +309,7 @@ function render_connect( $server, array $servers, string $url, bool $is_admin ):
 function render_browser_connection( bool $is_admin ): void {
 	$settings = \MCP_OAuth\WebMCP\Plugin::instance()->settings;
 	?>
-	<h2><?php esc_html_e( 'WebMCP', 'mcp-oauth' ); ?></h2>
+	<h3><?php esc_html_e( 'Browser (WebMCP)', 'mcp-oauth' ); ?></h3>
 	<p><?php esc_html_e( 'Open this site in a browser with WebMCP support. Its AI assistant can use the available abilities as the current visitor, without adding an MCP server URL.', 'mcp-oauth' ); ?></p>
 	<p><?php esc_html_e( 'Choose which abilities are available on the Abilities tab. Their WordPress permission checks apply to browser assistants too.', 'mcp-oauth' ); ?></p>
 	<?php if ( class_exists( '\WebMCP\Plugin', false ) ) : ?>
