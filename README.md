@@ -43,7 +43,7 @@ Update or remove the standalone plugin at will — MCP Connect keeps working eit
 
 MCP Connect also exposes WordPress abilities to AI agents visiting the site through the [WebMCP browser API](https://github.com/webmachinelearning/webmcp). It registers tools on the front end and in wp-admin, using `document.modelContext.registerTool()` with fallbacks for older browser implementations. Browsers without WebMCP support simply skip registration. HTTPS or a browser-trusted loopback origin is required.
 
-The **Abilities** tab under **Tools → MCP Connect** has one searchable list with descriptions and one hide/show choice for both MCP and WebMCP. Technical details and MCP direct-tool shortcuts are collapsed by default. The **Connect** tab includes **Browser (WebMCP)** alongside remote client setup. The MCP tool inventory is available in collapsed troubleshooting details on Abilities. Every execution checks the current user's permissions and input schema. Signed-in browser requests also require a security nonce. Hidden abilities and abilities explicitly opted out with `meta.mcp.public = false` or `wmcp_visibility = private` remain unavailable through both protocols.
+The **Abilities** tab under **Tools → MCP Connect** has one searchable list with descriptions and one hide/show choice for both MCP and WebMCP. Technical details and MCP direct-tool shortcuts are collapsed by default. The **WebMCP** tab enables or disables browser connections and explains how to use them. The MCP tool inventory is available in collapsed troubleshooting details on Abilities. Every execution checks the current user's permissions and input schema. Signed-in browser requests also require a security nonce. Hidden abilities and abilities explicitly opted out with `meta.mcp.public = false` or `wmcp_visibility = private` remain unavailable through both protocols.
 
 Logged-out access is disabled and has no admin setting. To explicitly enable it for both protocols, use:
 
@@ -65,7 +65,7 @@ All of them, unless an ability opts out with `meta.mcp.public = false`. The MCP 
 
 By default the way the MCP Adapter presents them: through the three meta-tools its default server registers — `discover-abilities`, `get-ability-info` and `execute-ability` — so a client names an ability in a string and gets to it in two calls. That keeps the tool list short on a site with a hundred abilities, at the cost of a round trip and a schema the client never sees.
 
-Open an ability’s **Details** and enable **Direct tool** on the Abilities tab to also register it as a tool in its own right, with its own name, description and input schema, so a client calls it in a single step. The meta-tools stay either way, so nothing becomes unreachable — promotion is for the handful of abilities worth spending a client's tool budget on. The `mcp_oauth_direct_tools` filter sets the promoted list in code, and `mcp_oauth_tools` has the final say over what the server registers.
+Open an ability’s **Details** and enable **Add to the MCP client’s tool list** on the Abilities tab to also register it as a tool in its own right, with its own name, description and input schema, so a client calls it in a single step. The meta-tools stay either way, so nothing becomes unreachable — promotion is for the handful of abilities worth spending a client's tool budget on. The `mcp_oauth_direct_tools` filter sets the promoted list in code, and `mcp_oauth_tools` has the final say over what the server registers.
 
 The OAuth endpoints are only exposed on HTTPS sites (and local environments).
 

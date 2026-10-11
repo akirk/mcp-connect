@@ -46,7 +46,7 @@ function action_links( array $links ): array {
  * revoke their own connections there.
  */
 function register_page(): void {
-	$hook = add_management_page( __( 'MCP Connect', 'mcp-oauth' ), __( 'MCP Connect', 'mcp-oauth' ), \MCP_OAuth\authorize_capability(), PAGE_SLUG, __NAMESPACE__ . '\render' );
+	$hook = add_management_page( __( 'MCP Connect + WebMCP', 'mcp-oauth' ), __( 'MCP Connect + WebMCP', 'mcp-oauth' ), \MCP_OAuth\authorize_capability(), PAGE_SLUG, __NAMESPACE__ . '\render' );
 	if ( $hook ) {
 		add_action( 'load-' . $hook, __NAMESPACE__ . '\handle_actions' );
 	}
@@ -118,6 +118,9 @@ function render(): void {
 		'abilities'   => __( 'Abilities', 'mcp-oauth' ),
 		'connections' => __( 'Connections', 'mcp-oauth' ),
 	);
+	if ( $is_admin ) {
+		$tabs['webmcp'] = __( 'WebMCP', 'mcp-oauth' );
+	}
 	$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'connect'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( 'tools' === $tab ) {
 		$tab = 'abilities';
@@ -127,11 +130,10 @@ function render(): void {
 	}
 	?>
 	<div class="wrap mcp-oauth">
-		<h1><?php esc_html_e( 'MCP Connect', 'mcp-oauth' ); ?></h1>
-		<?php if ( 'connect' === $tab ) : ?>
+		<h1><?php esc_html_e( 'MCP Connect + WebMCP', 'mcp-oauth' ); ?></h1>
 		<p class="description" style="max-width:52em"><?php esc_html_e( 'AI assistants can connect through MCP with OAuth, or use WebMCP in a supported browser. Revoke OAuth clients under Connections; manage ability visibility under Abilities. Both use WordPress ability permissions.', 'mcp-oauth' ); ?></p>
 
-			<?php if ( \MCP_OAuth\is_playground() ) : ?>
+			<?php if ( 'connect' === $tab && \MCP_OAuth\is_playground() ) : ?>
 			<div class="notice notice-info inline mcp-oauth-playground-notice"><p>
 				<?php
 				printf(
@@ -142,8 +144,6 @@ function render(): void {
 				);
 				?>
 			</p></div>
-		<?php endif; ?>
-
 		<?php endif; ?>
 
 		<nav class="nav-tab-wrapper">
@@ -172,6 +172,8 @@ function render(): void {
 			<?php endif; ?>
 		<?php elseif ( 'abilities' === $tab ) : ?>
 			<?php render_abilities( $is_admin ); ?>
+		<?php elseif ( 'webmcp' === $tab && $is_admin ) : ?>
+			<?php render_browser_connection( $is_admin ); ?>
 		<?php elseif ( 'connections' === $tab ) : ?>
 			<?php render_connections( $is_admin ); ?>
 		<?php endif; ?>
@@ -204,7 +206,7 @@ function render_connect( $server, array $servers, string $url, bool $is_admin ):
 	<?php endif; ?>
 
 	<p style="margin-top:16px">
-		<?php esc_html_e( 'Choose how your AI assistant connects. Remote clients sign in through your browser; browser assistants can use WebMCP on this site.', 'mcp-oauth' ); ?>
+		<?php esc_html_e( 'Choose your AI client. Each signs in to this site through your browser.', 'mcp-oauth' ); ?>
 		<?php if ( $is_admin ) : ?>
 			<?php
 			printf(
@@ -222,7 +224,6 @@ function render_connect( $server, array $servers, string $url, bool $is_admin ):
 		<?php foreach ( Clients\catalog( $url ) as $id => $client ) : ?>
 			<button type="button" role="tab" class="mcp-oauth-tab" data-target="mcp-oauth-client-<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $client['name'] ); ?></button>
 		<?php endforeach; ?>
-		<button type="button" role="tab" class="mcp-oauth-tab" data-target="mcp-oauth-client-browser"><?php esc_html_e( 'Browser (WebMCP)', 'mcp-oauth' ); ?></button>
 	</div>
 	<?php foreach ( Clients\catalog( $url ) as $id => $client ) : ?>
 		<div class="mcp-oauth-client card" id="mcp-oauth-client-<?php echo esc_attr( $id ); ?>" hidden>
@@ -298,9 +299,6 @@ function render_connect( $server, array $servers, string $url, bool $is_admin ):
 			<?php endif; ?>
 		</div>
 	<?php endforeach; ?>
-	<div class="mcp-oauth-client card" id="mcp-oauth-client-browser" hidden>
-		<?php render_browser_connection( $is_admin ); ?>
-	</div>
 	<?php
 }
 
@@ -312,7 +310,7 @@ function render_connect( $server, array $servers, string $url, bool $is_admin ):
 function render_browser_connection( bool $is_admin ): void {
 	$settings = \MCP_OAuth\WebMCP\Plugin::instance()->settings;
 	?>
-	<h3><?php esc_html_e( 'Browser (WebMCP)', 'mcp-oauth' ); ?></h3>
+	<h2><?php esc_html_e( 'WebMCP', 'mcp-oauth' ); ?></h2>
 	<p><?php esc_html_e( 'Open this site in a browser with WebMCP support. Its AI assistant can use the available abilities as the current visitor, without adding an MCP server URL.', 'mcp-oauth' ); ?></p>
 	<p><?php esc_html_e( 'Choose which abilities are available on the Abilities tab. Their WordPress permission checks apply to browser assistants too.', 'mcp-oauth' ); ?></p>
 	<?php if ( class_exists( '\WebMCP\Plugin', false ) ) : ?>
@@ -466,7 +464,8 @@ function render_abilities( bool $is_admin ): void {
 		<tbody>
 		<?php foreach ( $rows as $row ) : ?>
 			<tr class="mcp-oauth-ability<?php echo $row['visible'] ? '' : ' is-hidden'; ?>" data-ability="<?php echo esc_attr( $row['name'] ); ?>" data-search="<?php echo esc_attr( strtolower( $row['label'] . ' ' . $row['name'] . ' ' . $row['description'] ) ); ?>">
-				<td class="mcp-oauth-ability-name">
+				<td colspan="2">
+					<div class="mcp-oauth-ability-summary">
 					<div class="mcp-oauth-ability-heading">
 					<?php $icon = $row['visible'] ? '<span class="dashicons dashicons-visibility" style="color:#00a32a"></span>' : '<span class="dashicons dashicons-hidden"></span>'; ?>
 					<?php if ( $is_admin && ! $row['locked'] ) : ?>
@@ -476,18 +475,20 @@ function render_abilities( bool $is_admin ): void {
 					<?php endif; ?>
 						<strong><?php echo esc_html( $row['label'] ); ?></strong>
 					</div>
+						<div class="mcp-oauth-ability-description"><?php echo esc_html( $row['description'] ); ?></div>
+					</div>
 					<details class="mcp-oauth-ability-details">
 						<summary><?php esc_html_e( 'Details', 'mcp-oauth' ); ?></summary>
 						<p><code><?php echo esc_html( $row['name'] ); ?></code> · <?php echo esc_html( $row['type'] ); ?></p>
 						<p class="mcp-oauth-reason<?php echo $row['override'] ? ' is-override' : ''; ?>"><?php echo esc_html( $row['reason'] ); ?></p>
 
 					<?php if ( $row['tool_type'] ) : ?>
-						<label><input type="checkbox" class="mcp-oauth-tool" data-ability="<?php echo esc_attr( $row['name'] ); ?>"<?php checked( $row['direct'] ); ?><?php disabled( ! $is_admin || ! $row['visible'] ); ?> title="<?php echo esc_attr( $row['visible'] ? __( 'Expose this ability as a tool of its own', 'mcp-oauth' ) : __( 'Hidden abilities cannot be tools', 'mcp-oauth' ) ); ?>"> <?php esc_html_e( 'Direct tool', 'mcp-oauth' ); ?></label>
+						<label><input type="checkbox" class="mcp-oauth-tool" data-ability="<?php echo esc_attr( $row['name'] ); ?>"<?php checked( $row['direct'] ); ?><?php disabled( ! $is_admin || ! $row['visible'] ); ?> title="<?php echo esc_attr( $row['visible'] ? __( 'Expose this ability as a tool of its own', 'mcp-oauth' ) : __( 'Hidden abilities cannot be tools', 'mcp-oauth' ) ); ?>"> <?php esc_html_e( 'Add to the MCP client’s tool list', 'mcp-oauth' ); ?></label>
+						<p class="description"><?php esc_html_e( 'MCP clients can already discover and use this ability. Enable this to give it its own entry in their tool list, so they can call it directly. Each added entry takes up space in the client’s tool list. WebMCP already lists available abilities individually.', 'mcp-oauth' ); ?></p>
 					<?php endif; ?>
 
 					</details>
 				</td>
-				<td class="mcp-oauth-ability-description"><?php echo esc_html( $row['description'] ); ?></td>
 			</tr>
 		<?php endforeach; ?>
 		</tbody>
@@ -497,7 +498,7 @@ function render_abilities( bool $is_admin ): void {
 	<details class="mcp-oauth-ability-help">
 		<summary><?php esc_html_e( 'How access works', 'mcp-oauth' ); ?></summary>
 		<p><strong id="mcp-oauth-direct-count"><?php echo (int) $direct; ?></strong> <?php esc_html_e( 'direct MCP tools', 'mcp-oauth' ); ?></p>
-		<p><?php esc_html_e( 'The eye controls whether an ability is available through MCP and WebMCP. Both protocols use the same abilities and WordPress permissions. In Details, Direct tool adds a shortcut for MCP clients.', 'mcp-oauth' ); ?></p>
+		<p><?php esc_html_e( 'The eye controls whether an ability is available through MCP and WebMCP. Both protocols use the same abilities and WordPress permissions. In Details, you can also add an ability to the MCP client’s tool list as a direct shortcut.', 'mcp-oauth' ); ?></p>
 	</details>
 	<?php if ( \MCP_OAuth\adapter_available() ) : ?>
 		<details class="mcp-oauth-ability-help" id="mcp-oauth-tool-inventory">
@@ -589,12 +590,15 @@ function render_assets(): void {
 		.mcp-oauth #mcp-oauth-ability-search { min-width:240px; }
 		.mcp-oauth .mcp-oauth-ability-toolbar .description { margin-left:auto; }
 		.mcp-oauth .mcp-oauth-ability-column { width:34%; }
+		.mcp-oauth .mcp-oauth-ability-summary { display:grid; grid-template-columns:34% 1fr; gap:14px; align-items:start; }
 		.mcp-oauth .mcp-oauth-ability-description { line-height:1.6; }
 		.mcp-oauth .mcp-oauth-ability td { padding:12px 14px; vertical-align:middle; }
 		.mcp-oauth .mcp-oauth-ability-heading { display:flex; align-items:center; gap:10px; }
-		.mcp-oauth .mcp-oauth-ability-details { margin:5px 0 0 30px; font-size:12px; }
-		.mcp-oauth .mcp-oauth-ability-details summary { color:#646970; cursor:pointer; }
-		.mcp-oauth .mcp-oauth-ability-details p { margin:6px 0; }
+		.mcp-oauth .mcp-oauth-ability-details { margin:6px 0 0 30px; }
+		.mcp-oauth .mcp-oauth-ability-details summary { font-size:12px; color:#646970; cursor:pointer; }
+		.mcp-oauth .mcp-oauth-ability-details p { margin:10px 0; }
+		.mcp-oauth .mcp-oauth-ability-details .description { max-width:70em; }
+		@media (max-width:782px) { .mcp-oauth .mcp-oauth-ability-summary { grid-template-columns:1fr; gap:6px; } }
 		.mcp-oauth .mcp-oauth-ability-help { max-width:1100px; margin:16px 0; }
 		.mcp-oauth .mcp-oauth-ability-help summary { cursor:pointer; color:#646970; }
 		.mcp-oauth .mcp-oauth-reason.is-override { color:#b26200; font-weight:600; }
