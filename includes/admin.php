@@ -119,21 +119,24 @@ function render(): void {
 		'tools'       => __( 'Tools', 'mcp-oauth' ),
 		'connections' => __( 'Connections', 'mcp-oauth' ),
 	);
-	$tab      = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'connect'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( $is_admin ) {
+		$tabs['webmcp'] = __( 'WebMCP', 'mcp-oauth' );
+	}
+	$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'connect'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( ! isset( $tabs[ $tab ] ) ) {
 		$tab = 'connect';
 	}
 	?>
 	<div class="wrap mcp-oauth">
 		<h1><?php esc_html_e( 'MCP Connect', 'mcp-oauth' ); ?></h1>
-		<p class="description" style="max-width:52em"><?php esc_html_e( 'With MCP Connect you can allow AI assistants to connect to this WordPress using OAuth. Once connected, they act on your behalf; you can revoke that at any time under the Connections tab.', 'mcp-oauth' ); ?></p>
+		<p class="description" style="max-width:52em"><?php esc_html_e( 'AI assistants can connect through MCP with OAuth, or use WebMCP in a supported browser. Revoke OAuth clients under Connections; configure browser tools under WebMCP. Both use WordPress ability permissions.', 'mcp-oauth' ); ?></p>
 
 		<?php if ( \MCP_OAuth\is_playground() ) : ?>
 			<div class="notice notice-info inline mcp-oauth-playground-notice"><p>
 				<?php
 				printf(
 					/* translators: 1: link to the guide on connecting AI agents to Playground, 2: link to the Playground Query API documentation */
-					esc_html__( 'This site runs in WordPress Playground, which lives in your browser and cannot be reached by AI clients, so none of them can connect to it. To use MCP with Playground, see %1$s and the %2$s.', 'mcp-oauth' ),
+					esc_html__( 'This site runs in WordPress Playground, which lives in your browser and cannot be reached by remote MCP clients. WebMCP works within a supported browser. To use remote MCP with Playground, see %1$s and the %2$s.', 'mcp-oauth' ),
 					'<a href="https://make.wordpress.org/playground/2026/03/17/connect-ai-coding-agents-to-wordpress-playground-with-mcp/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Connect AI coding agents to WordPress Playground with MCP', 'mcp-oauth' ) . '</a>',
 					'<a href="https://developer.wordpress.org/playground/developers/apis/query-api/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Playground Query API documentation', 'mcp-oauth' ) . '</a>'
 				);
@@ -165,6 +168,11 @@ function render(): void {
 			<?php render_abilities( $is_admin ); ?>
 		<?php elseif ( 'tools' === $tab && \MCP_OAuth\adapter_available() ) : ?>
 			<?php render_tools( $servers ); ?>
+		<?php elseif ( 'webmcp' === $tab && $is_admin ) : ?>
+			<?php
+			$webmcp = \MCP_OAuth\WebMCP\Plugin::instance();
+			( new \MCP_OAuth\WebMCP\Admin_Page( $webmcp->settings, $webmcp->bridge ) )->render_page();
+			?>
 		<?php elseif ( 'connections' === $tab ) : ?>
 			<?php render_connections( $is_admin ); ?>
 		<?php endif; ?>

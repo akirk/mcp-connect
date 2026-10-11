@@ -39,6 +39,16 @@ From MCP Adapter 0.6.1 on, both copies register their classes with the [Jetpack 
 
 Update or remove the standalone plugin at will — MCP Connect keeps working either way. Tools → Site Health → Info → MCP Connect names the copy actually in use.
 
+### WebMCP in the browser
+
+MCP Connect also exposes WordPress abilities to AI agents visiting the site through the [WebMCP browser API](https://github.com/webmachinelearning/webmcp). It registers tools on the front end and in wp-admin, using `document.modelContext.registerTool()` with fallbacks for older browser implementations. Browsers without WebMCP support simply skip registration. HTTPS or a browser-trusted loopback origin is required.
+
+The **WebMCP** tab under **Tools → MCP Connect** controls the bridge, public discovery, and each ability's WebMCP visibility. Abilities default to signed-in discovery; public discovery is off by default. Each execution runs as the current visitor and checks the ability's permissions and input schema. Write requests from signed-in users also require a security nonce. Abilities hidden from MCP, explicitly opted out with `meta.mcp.public = false`, or marked `wmcp_visibility = private` stay hidden from WebMCP. The adapter's internal meta-tools are excluded.
+
+The bridge includes search posts, get a post, list categories, and submit a comment abilities. These abilities are also available through MCP. Existing `wmcp_*` settings and filters from WebMCP Abilities are preserved, including migration of its older allowlist. If that plugin remains active, it owns WebMCP registration; MCP Connect does not register a second script or duplicate routes. You can deactivate it to use the integrated bridge. Set `WEBMCP_PLUGIN_DIR=/path/to/webmcp-abilities` to test coexistence in the e2e suite.
+
+The REST endpoints remain under `webmcp/v1` for compatibility. Browser discovery is refreshed on each page load so visibility and permission changes are reflected immediately.
+
 ### Which abilities do clients see?
 
 All of them, unless an ability opts out with `meta.mcp.public = false`. The MCP Adapter on its own only lists abilities marked `meta.public`, but that flag does not protect anything: the MCP endpoint is only reachable by a signed-in user, and each ability enforces its own permission callback for that user. An administrator can hide individual abilities from clients on the MCP Connect page by clicking the eye icon.
@@ -67,6 +77,7 @@ The OAuth endpoints are only exposed on HTTPS sites (and local environments).
 composer install          # the bundled MCP Adapter, PHPUnit and WordPress coding standards
 composer test             # unit tests (no WordPress needed; tests/bootstrap.php stubs it)
 composer lint             # phpcs
+npm run build:webmcp      # compile the browser bridge from src/webmcp.ts
 npm install && npx playwright install chromium
 npm run test:e2e          # Playwright Test; boots WordPress with wp-playground-cli (tests/e2e/playground.js)
 ```
@@ -80,3 +91,7 @@ The e2e suite runs against the bundled adapter. Set `MCP_ADAPTER_PLUGIN=1` to al
 ### 0.1.0
 - Initial release.
 - Bundles the MCP Adapter, so no separate install is needed; a separately installed one takes over automatically.
+
+## Attribution
+
+The WebMCP bridge is adapted from [WebMCP Abilities](https://github.com/code-atlantic/webmcp-abilities), version 0.8.0, by Code Atlantic, licensed under GPL-2.0-or-later. The imported browser source is in `src/`; its generated asset is committed in `assets/`.

@@ -28,7 +28,7 @@ if ( ! fs.existsSync( path.join( ROOT, 'vendor', 'autoload_packages.php' ) ) ) {
 const stage = fs.mkdtempSync( path.join( os.tmpdir(), 'mcp-connect-e2e-' ) );
 const plugin = path.join( stage, 'mcp-connect' );
 fs.mkdirSync( plugin );
-for ( const entry of [ 'mcp-connect.php', 'uninstall.php', 'includes', 'vendor' ] ) {
+for ( const entry of [ 'mcp-connect.php', 'uninstall.php', 'includes', 'assets', 'vendor' ] ) {
 	fs.cpSync( path.join( ROOT, entry ), path.join( plugin, entry ), { recursive: true } );
 }
 
@@ -50,6 +50,10 @@ if ( standalone ) {
 		steps.push( { step: 'installPlugin', pluginData: { resource: 'url', url: zip }, options: { activate: false, targetFolderName: 'mcp-adapter' } } );
 	}
 	steps.push( { step: 'activatePlugin', pluginPath: 'mcp-adapter/mcp-adapter.php' } );
+}
+if ( process.env.WEBMCP_PLUGIN_DIR ) {
+	mounts.push( path.resolve( process.env.WEBMCP_PLUGIN_DIR ) + ':/wordpress/wp-content/plugins/webmcp-abilities' );
+	steps.push( { step: 'activatePlugin', pluginPath: 'webmcp-abilities/webmcp-abilities.php' } );
 }
 steps.push(
 	{ step: 'activatePlugin', pluginPath: 'mcp-connect/mcp-connect.php' },
