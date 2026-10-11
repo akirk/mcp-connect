@@ -157,6 +157,7 @@ function authorize_capability(): string {
  */
 function boot(): void {
 	Admin\register();
+	Abilities\register();
 	WebMCP\Plugin::instance();
 	Health\register();
 	boot_adapter();
@@ -167,7 +168,6 @@ function boot(): void {
 
 	Storage\maybe_install();
 	Servers\register();
-	Abilities\register();
 
 	if ( ! transport_allowed() ) {
 		return;

@@ -110,7 +110,7 @@ class Ability_Bridge {
 	 * @param \WP_Ability $ability Ability object.
 	 */
 	public function is_locked( \WP_Ability $ability ): bool {
-		return Settings::VISIBILITY_PRIVATE === $this->declared_visibility( $ability );
+		return ! in_array( $ability->get_name(), \MCP_OAuth\Abilities\hidden(), true ) && Settings::VISIBILITY_PRIVATE === $this->declared_visibility( $ability );
 	}
 
 	/**
@@ -123,30 +123,10 @@ class Ability_Bridge {
 	 * @param \WP_Ability $ability Ability object.
 	 */
 	public function resolve_visibility( string $name, \WP_Ability $ability ): string {
-		$declared = $this->declared_visibility( $ability );
-
-		if ( Settings::VISIBILITY_PRIVATE === $declared ) {
-			$visibility = Settings::VISIBILITY_PRIVATE;
-		} else {
-			$visibility = $this->settings->get_visibility_override( $name )
-				?? $declared
-				?? Settings::DEFAULT_VISIBILITY;
+		if ( ! \MCP_OAuth\Abilities\is_public( $ability ) || in_array( $name, \MCP_OAuth\Abilities\hidden(), true ) || 0 === strpos( $name, 'mcp-adapter/' ) ) {
+			return Settings::VISIBILITY_PRIVATE;
 		}
-
-		/**
-		 * Filter the visibility of a single ability.
-		 *
-		 * Has the final say over both the ability's own declaration and the
-		 * administrator's choice. Return one of 'public', 'authenticated' or
-		 * 'private'; anything else is ignored.
-		 *
-		 * @param string      $visibility Resolved visibility.
-		 * @param string      $name       Ability name.
-		 * @param \WP_Ability $ability    The ability object.
-		 */
-		$filtered = apply_filters( 'wmcp_tool_visibility', $visibility, $name, $ability );
-
-		return in_array( $filtered, Settings::VISIBILITIES, true ) ? $filtered : $visibility;
+		return \MCP_OAuth\Abilities\allow_anonymous_access() ? Settings::VISIBILITY_PUBLIC : Settings::VISIBILITY_AUTHENTICATED;
 	}
 
 	/**

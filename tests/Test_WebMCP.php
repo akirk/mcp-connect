@@ -22,6 +22,15 @@ class Test_WebMCP extends TestCase {
 		$this->assertSame( 'authenticated', $settings->get_visibility_override( 'demo/allowed' ) );
 	}
 
+	public function test_legacy_allowlist_hides_abilities_before_admin_migration(): void {
+		Abilities\register();
+		update_option( 'wmcp_exposed_tools', array( 'demo/allowed' ) );
+		wp_test_register_ability( 'demo/allowed' );
+		wp_test_register_ability( 'demo/hidden' );
+		$this->assertTrue( Abilities\is_public( wp_get_ability( 'demo/allowed' ) ) );
+		$this->assertFalse( Abilities\is_public( wp_get_ability( 'demo/hidden' ) ) );
+	}
+
 	public function test_mcp_hidden_and_internal_abilities_cannot_be_advertised(): void {
 		Abilities\register();
 		Abilities\set_hidden( 'demo/hidden', true );
@@ -38,6 +47,7 @@ class Test_WebMCP extends TestCase {
 	}
 
 	public function test_discovery_rechecks_permissions_after_a_change(): void {
+		Abilities\register();
 		$GLOBALS['wp_test']['logged_in'] = true;
 		wp_test_register_ability( 'demo/read', array( 'permission_callback' => static function () { return current_user_can( 'read' ); } ) );
 		$bridge = new Ability_Bridge( new Settings() );
@@ -71,4 +81,24 @@ class Test_WebMCP extends TestCase {
 		$this->assertTrue( $next_request->check_execution( 2, 'demo/write' ) );
 	}
 
+	public function test_anonymous_access_requires_filter_and_visibility_is_shared(): void {
+		Abilities\register();
+		update_option( 'wmcp_discovery_public', true );
+		update_option( 'wmcp_tool_visibility', array( 'demo/read' => 'public', 'demo/hidden' => 'private' ) );
+		wp_test_register_ability( 'demo/read', array( 'meta' => array( 'wmcp_visibility' => 'public' ) ) );
+		wp_test_register_ability( 'demo/hidden' );
+		$settings = new Settings();
+		$bridge = new Ability_Bridge( $settings );
+		$this->assertFalse( $settings->is_discovery_public() );
+		$this->assertSame( 'authenticated', $bridge->resolve_visibility( 'demo/read', wp_get_ability( 'demo/read' ) ) );
+		$this->assertFalse( Abilities\is_public( wp_get_ability( 'demo/hidden' ) ) );
+		add_filter( 'mcp_oauth_allow_anonymous_access', static function () { return true; } );
+		$this->assertTrue( $settings->is_discovery_public() );
+		$this->assertSame( 'public', $bridge->resolve_visibility( 'demo/read', wp_get_ability( 'demo/read' ) ) );
+		Abilities\set_hidden( 'demo/read', true );
+		$this->assertSame( 'private', $bridge->resolve_visibility( 'demo/read', wp_get_ability( 'demo/read' ) ) );
+		Abilities\set_hidden( 'demo/read', false );
+		$this->assertSame( 'public', $bridge->resolve_visibility( 'demo/read', wp_get_ability( 'demo/read' ) ) );
+		$this->assertNotContains( 'demo/read', Abilities\hidden() );
+	}
 }

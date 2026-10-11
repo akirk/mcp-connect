@@ -129,9 +129,10 @@ function render(): void {
 	?>
 	<div class="wrap mcp-oauth">
 		<h1><?php esc_html_e( 'MCP Connect', 'mcp-oauth' ); ?></h1>
-		<p class="description" style="max-width:52em"><?php esc_html_e( 'AI assistants can connect through MCP with OAuth, or use WebMCP in a supported browser. Revoke OAuth clients under Connections; configure browser tools under WebMCP. Both use WordPress ability permissions.', 'mcp-oauth' ); ?></p>
+		<?php if ( 'connect' === $tab ) : ?>
+		<p class="description" style="max-width:52em"><?php esc_html_e( 'AI assistants can connect through MCP with OAuth, or use WebMCP in a supported browser. Revoke OAuth clients under Connections; manage ability visibility under Abilities. Both use WordPress ability permissions.', 'mcp-oauth' ); ?></p>
 
-		<?php if ( \MCP_OAuth\is_playground() ) : ?>
+			<?php if ( \MCP_OAuth\is_playground() ) : ?>
 			<div class="notice notice-info inline mcp-oauth-playground-notice"><p>
 				<?php
 				printf(
@@ -142,6 +143,8 @@ function render(): void {
 				);
 				?>
 			</p></div>
+		<?php endif; ?>
+
 		<?php endif; ?>
 
 		<nav class="nav-tab-wrapper">
@@ -164,7 +167,7 @@ function render(): void {
 
 		<?php if ( 'connect' === $tab && $server && \MCP_OAuth\transport_allowed() ) : ?>
 			<?php render_connect( $server, $servers, $url, $is_admin ); ?>
-		<?php elseif ( 'abilities' === $tab && \MCP_OAuth\adapter_available() ) : ?>
+		<?php elseif ( 'abilities' === $tab ) : ?>
 			<?php render_abilities( $is_admin ); ?>
 		<?php elseif ( 'tools' === $tab && \MCP_OAuth\adapter_available() ) : ?>
 			<?php render_tools( $servers ); ?>
@@ -393,78 +396,81 @@ function connections_table( array $rows, bool $show_user ): void {
 }
 
 /**
- * Which abilities the MCP Adapter exposes to connected clients, and the switch
- * to expose them all.
+ * Configure shared ability visibility and optional MCP tool shortcuts.
  */
 function render_abilities( bool $is_admin ): void {
-	$rows    = Abilities\report();
+	$rows = array_values(
+		array_filter(
+			Abilities\report(),
+			static function ( array $row ): bool {
+				return 0 !== strpos( $row['name'], 'mcp-adapter/' );
+			}
+		)
+	);
 	$visible = count( array_filter( array_column( $rows, 'visible' ) ) );
 	$direct  = count( array_filter( array_column( $rows, 'direct' ) ) );
 	?>
-	<h2 id="abilities"><?php esc_html_e( 'Abilities visible to connected clients', 'mcp-oauth' ); ?></h2>
-	<p>
-		<?php
-		printf(
-			/* translators: 1: number of visible abilities, 2: number of registered abilities */
-			esc_html__( 'Connected clients can reach %1$s of the %2$s abilities registered on this site, by name, through the adapter’s discover and execute tools. Every request arrives as the signed-in user, and each ability checks its own permissions for that user — that, not a “public” flag, is what limits what a client can do.', 'mcp-oauth' ),
-			'<strong id="mcp-oauth-visible-count">' . (int) $visible . '</strong>',
-			'<strong>' . count( $rows ) . '</strong>'
-		);
-		if ( $is_admin ) {
-			echo ' ' . esc_html__( 'Click the eye to hide an ability from clients, or show it again.', 'mcp-oauth' );
-		}
-		?>
-	</p>
-	<p>
-		<?php
-		printf(
-			/* translators: %s: number of abilities exposed as tools of their own */
-			esc_html__( 'Tick “Expose as MCP tool” to also register an ability as a tool of its own, so a client calls it in one step instead of looking it up first — worth it for the abilities you reach for most, but every tool costs a client some of its budget, so %s of them are exposed that way.', 'mcp-oauth' ),
-			'<strong id="mcp-oauth-direct-count">' . (int) $direct . '</strong>'
-		);
-		?>
-	</p>
+	<h2 id="abilities"><?php esc_html_e( 'Abilities', 'mcp-oauth' ); ?></h2>
+	<p><?php esc_html_e( 'Choose what AI assistants can use. Each ability always checks the user’s permissions.', 'mcp-oauth' ); ?></p>
 	<?php if ( ! $rows ) : ?>
 		<p><?php esc_html_e( 'No abilities are registered.', 'mcp-oauth' ); ?></p>
 		<?php return; ?>
 	<?php endif; ?>
+	<div class="mcp-oauth-ability-toolbar">
+		<label class="screen-reader-text" for="mcp-oauth-ability-search"><?php esc_html_e( 'Search abilities', 'mcp-oauth' ); ?></label>
+		<input type="search" id="mcp-oauth-ability-search" placeholder="<?php esc_attr_e( 'Search abilities…', 'mcp-oauth' ); ?>">
+		<label class="screen-reader-text" for="mcp-oauth-ability-filter"><?php esc_html_e( 'Filter abilities', 'mcp-oauth' ); ?></label>
+		<select id="mcp-oauth-ability-filter">
+			<option value="all"><?php esc_html_e( 'All abilities', 'mcp-oauth' ); ?></option>
+			<option value="available"><?php esc_html_e( 'Available', 'mcp-oauth' ); ?></option>
+			<option value="hidden"><?php esc_html_e( 'Hidden', 'mcp-oauth' ); ?></option>
+		</select>
+		<span class="description"><strong id="mcp-oauth-visible-count"><?php echo (int) $visible; ?></strong> <?php esc_html_e( 'available', 'mcp-oauth' ); ?></span>
+	</div>
 	<div class="mcp-oauth-scroll">
 	<table class="widefat striped" style="max-width:1100px">
 		<thead>
 			<tr>
-				<th style="width:1.5em"></th>
-				<th><?php esc_html_e( 'Ability', 'mcp-oauth' ); ?></th>
-				<th><?php esc_html_e( 'Label', 'mcp-oauth' ); ?></th>
-				<th><?php esc_html_e( 'Type', 'mcp-oauth' ); ?></th>
-				<th style="width:11em" class="mcp-oauth-tool-cell"><?php esc_html_e( 'Expose as MCP tool', 'mcp-oauth' ); ?></th>
-				<th><?php esc_html_e( 'Why', 'mcp-oauth' ); ?></th>
+				<th class="mcp-oauth-ability-column"><?php esc_html_e( 'Ability', 'mcp-oauth' ); ?></th>
+				<th><?php esc_html_e( 'What it does', 'mcp-oauth' ); ?></th>
 			</tr>
 		</thead>
 		<tbody>
 		<?php foreach ( $rows as $row ) : ?>
-			<tr class="mcp-oauth-ability<?php echo $row['visible'] ? '' : ' is-hidden'; ?>" data-ability="<?php echo esc_attr( $row['name'] ); ?>">
-				<td>
+			<tr class="mcp-oauth-ability<?php echo $row['visible'] ? '' : ' is-hidden'; ?>" data-ability="<?php echo esc_attr( $row['name'] ); ?>" data-search="<?php echo esc_attr( strtolower( $row['label'] . ' ' . $row['name'] . ' ' . $row['description'] ) ); ?>">
+				<td class="mcp-oauth-ability-name">
+					<div class="mcp-oauth-ability-heading">
 					<?php $icon = $row['visible'] ? '<span class="dashicons dashicons-visibility" style="color:#00a32a"></span>' : '<span class="dashicons dashicons-hidden"></span>'; ?>
 					<?php if ( $is_admin && ! $row['locked'] ) : ?>
 						<button type="button" class="mcp-oauth-eye" data-ability="<?php echo esc_attr( $row['name'] ); ?>" data-visible="<?php echo $row['visible'] ? '1' : '0'; ?>" aria-pressed="<?php echo $row['visible'] ? 'true' : 'false'; ?>" title="<?php echo esc_attr( $row['visible'] ? __( 'Visible — click to hide', 'mcp-oauth' ) : __( 'Hidden — click to show', 'mcp-oauth' ) ); ?>"><?php echo $icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?></button>
 					<?php else : ?>
 						<span title="<?php echo esc_attr( $row['visible'] ? __( 'Visible', 'mcp-oauth' ) : __( 'Hidden', 'mcp-oauth' ) ); ?>"><?php echo $icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?></span>
 					<?php endif; ?>
-				</td>
-				<td><code><?php echo esc_html( $row['name'] ); ?></code></td>
-				<td><?php echo esc_html( $row['label'] ); ?></td>
-				<td><?php echo esc_html( $row['type'] ); ?></td>
-				<td class="mcp-oauth-tool-cell">
+						<strong><?php echo esc_html( $row['label'] ); ?></strong>
+					</div>
+					<details class="mcp-oauth-ability-details">
+						<summary><?php esc_html_e( 'Details', 'mcp-oauth' ); ?></summary>
+						<p><code><?php echo esc_html( $row['name'] ); ?></code> · <?php echo esc_html( $row['type'] ); ?></p>
+						<p class="mcp-oauth-reason<?php echo $row['override'] ? ' is-override' : ''; ?>"><?php echo esc_html( $row['reason'] ); ?></p>
+
 					<?php if ( $row['tool_type'] ) : ?>
-						<input type="checkbox" class="mcp-oauth-tool" data-ability="<?php echo esc_attr( $row['name'] ); ?>"<?php checked( $row['direct'] ); ?><?php disabled( ! $is_admin || ! $row['visible'] ); ?> title="<?php echo esc_attr( $row['visible'] ? __( 'Expose this ability as a tool of its own', 'mcp-oauth' ) : __( 'Hidden abilities cannot be tools', 'mcp-oauth' ) ); ?>">
+						<label><input type="checkbox" class="mcp-oauth-tool" data-ability="<?php echo esc_attr( $row['name'] ); ?>"<?php checked( $row['direct'] ); ?><?php disabled( ! $is_admin || ! $row['visible'] ); ?> title="<?php echo esc_attr( $row['visible'] ? __( 'Expose this ability as a tool of its own', 'mcp-oauth' ) : __( 'Hidden abilities cannot be tools', 'mcp-oauth' ) ); ?>"> <?php esc_html_e( 'Direct tool', 'mcp-oauth' ); ?></label>
 					<?php endif; ?>
+
+					</details>
 				</td>
-				<td class="mcp-oauth-reason<?php echo $row['override'] ? ' is-override' : ''; ?>"><?php echo esc_html( $row['reason'] ); ?></td>
+				<td class="mcp-oauth-ability-description"><?php echo esc_html( $row['description'] ); ?></td>
 			</tr>
 		<?php endforeach; ?>
 		</tbody>
 	</table>
 	</div>
+	<p id="mcp-oauth-no-abilities" hidden role="status"><?php esc_html_e( 'No abilities match your search.', 'mcp-oauth' ); ?></p>
+	<details class="mcp-oauth-ability-help">
+		<summary><?php esc_html_e( 'How access works', 'mcp-oauth' ); ?></summary>
+		<p><strong id="mcp-oauth-direct-count"><?php echo (int) $direct; ?></strong> <?php esc_html_e( 'direct MCP tools', 'mcp-oauth' ); ?></p>
+		<p><?php esc_html_e( 'The eye controls whether an ability is available through MCP and WebMCP. Both protocols use the same abilities and WordPress permissions. In Details, Direct tool adds a shortcut for MCP clients.', 'mcp-oauth' ); ?></p>
+	</details>
 	<?php
 }
 
@@ -553,8 +559,18 @@ function render_assets(): void {
 		.mcp-oauth .mcp-oauth-eye:disabled { opacity:.5; cursor:wait; }
 		.mcp-oauth .mcp-oauth-ability.is-hidden { color:#646970; }
 		.mcp-oauth .mcp-oauth-scroll { overflow-x:auto; max-width:100%; }
-		.mcp-oauth .mcp-oauth-tool-cell { text-align:center; }
-		.mcp-oauth .mcp-oauth-tool-cell input { margin:0; }
+		.mcp-oauth .mcp-oauth-ability-toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; max-width:1100px; margin:20px 0 12px; }
+		.mcp-oauth #mcp-oauth-ability-search { min-width:240px; }
+		.mcp-oauth .mcp-oauth-ability-toolbar .description { margin-left:auto; }
+		.mcp-oauth .mcp-oauth-ability-column { width:34%; }
+		.mcp-oauth .mcp-oauth-ability-description { line-height:1.6; }
+		.mcp-oauth .mcp-oauth-ability td { padding:12px 14px; vertical-align:middle; }
+		.mcp-oauth .mcp-oauth-ability-heading { display:flex; align-items:center; gap:10px; }
+		.mcp-oauth .mcp-oauth-ability-details { margin:5px 0 0 30px; font-size:12px; }
+		.mcp-oauth .mcp-oauth-ability-details summary { color:#646970; cursor:pointer; }
+		.mcp-oauth .mcp-oauth-ability-details p { margin:6px 0; }
+		.mcp-oauth .mcp-oauth-ability-help { max-width:1100px; margin:16px 0; }
+		.mcp-oauth .mcp-oauth-ability-help summary { cursor:pointer; color:#646970; }
 		.mcp-oauth .mcp-oauth-reason.is-override { color:#b26200; font-weight:600; }
 	</style>
 	<script>
@@ -578,6 +594,23 @@ function render_assets(): void {
 			try { saved = window.localStorage.getItem( key ); } catch ( e ) {}
 			show( saved && document.getElementById( saved ) ? saved : tabs[0].dataset.target );
 		}
+		function filterAbilities() {
+			var search = document.getElementById( 'mcp-oauth-ability-search' );
+			var filter = document.getElementById( 'mcp-oauth-ability-filter' );
+			if ( ! search || ! filter ) { return; }
+			var query = search.value.trim().toLowerCase();
+			var matches = 0;
+			document.querySelectorAll( '.mcp-oauth-ability' ).forEach( function ( row ) {
+				var hidden = row.classList.contains( 'is-hidden' );
+				row.hidden = row.dataset.search.indexOf( query ) === -1 || ( filter.value === 'available' && hidden ) || ( filter.value === 'hidden' && ! hidden );
+				if ( ! row.hidden ) { matches++; }
+			} );
+			document.getElementById( 'mcp-oauth-no-abilities' ).hidden = matches > 0;
+		}
+		[ 'mcp-oauth-ability-search', 'mcp-oauth-ability-filter' ].forEach( function ( id ) {
+			var control = document.getElementById( id );
+			if ( control ) { control.addEventListener( 'input', filterAbilities ); }
+		} );
 		document.querySelectorAll( '.mcp-oauth-eye' ).forEach( function ( eye ) {
 			eye.addEventListener( 'click', function () {
 				var hide = eye.dataset.visible === '1';
@@ -594,6 +627,7 @@ function render_assets(): void {
 					eye.title = data.visible ? <?php echo wp_json_encode( __( 'Visible — click to hide', 'mcp-oauth' ) ); ?> : <?php echo wp_json_encode( __( 'Hidden — click to show', 'mcp-oauth' ) ); ?>;
 					eye.innerHTML = data.visible ? '<span class="dashicons dashicons-visibility" style="color:#00a32a"></span>' : '<span class="dashicons dashicons-hidden"></span>';
 					row.classList.toggle( 'is-hidden', ! data.visible );
+					filterAbilities();
 					var reason = row.querySelector( '.mcp-oauth-reason' );
 					reason.textContent = data.reason;
 					reason.classList.toggle( 'is-override', !! data.override );

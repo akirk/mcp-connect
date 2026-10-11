@@ -108,7 +108,14 @@ function handle_toggle( $request ) {
 	set_hidden( $name, $hide );
 
 	// Abilities were registered before this change, so derive the new state instead of re-reading it.
-	$rows    = report();
+	$rows    = array_values(
+		array_filter(
+			report(),
+			static function ( $item ) {
+				return 0 !== strpos( $item['name'], 'mcp-adapter/' );
+			}
+		)
+	);
 	$visible = count( array_filter( array_column( $rows, 'visible' ) ) );
 	if ( $row['visible'] === $hide ) {
 		$visible += $hide ? -1 : 1;
@@ -134,6 +141,12 @@ function hidden(): array {
 	$hidden = get_option( OPTION, array() );
 	$hidden = is_array( $hidden ) ? array_values( array_filter( $hidden, 'is_string' ) ) : array();
 
+	// Preserve hidden choices imported from the standalone browser bridge.
+	$legacy = get_option( 'wmcp_tool_visibility', array() );
+	if ( is_array( $legacy ) ) {
+		$hidden = array_values( array_unique( array_merge( $hidden, array_keys( $legacy, 'private', true ) ) ) );
+	}
+
 	/**
 	 * Filters the abilities hidden from MCP clients.
 	 *
@@ -152,6 +165,12 @@ function set_hidden( string $name, bool $hide ): void {
 	if ( $hide ) {
 		$hidden[] = $name;
 	}
+	$legacy = get_option( 'wmcp_tool_visibility', array() );
+	if ( is_array( $legacy ) && isset( $legacy[ $name ] ) ) {
+		unset( $legacy[ $name ] );
+		update_option( 'wmcp_tool_visibility', $legacy, false );
+	}
+
 	update_option( OPTION, $hidden, false );
 }
 
@@ -237,7 +256,15 @@ function expose_ability( $args, $name ) {
 	if ( isset( $mcp['public'] ) && false === (bool) $mcp['public'] ) {
 		return $args;
 	}
-	$mcp['public'] = ! in_array( (string) $name, hidden(), true );
+	if ( 'private' === ( $meta['wmcp_visibility'] ?? null ) ) {
+		$mcp['public'] = false;
+		$meta['mcp'] = $mcp;
+		$args['meta'] = $meta;
+		return $args;
+	}
+	$legacy_allowlist = get_option( 'wmcp_exposed_tools', null );
+	$legacy_hidden = null !== $legacy_allowlist && ! get_option( 'wmcp_visibility_migrated', false ) && ! in_array( (string) $name, is_array( $legacy_allowlist ) ? $legacy_allowlist : array(), true );
+	$mcp['public'] = ! $legacy_hidden && ! in_array( (string) $name, hidden(), true );
 	$meta['mcp']   = $mcp;
 	$args['meta']  = $meta;
 	return $args;
@@ -308,10 +335,14 @@ function expose_abilities_as_tools( $config ) {
 	}
 	$meta_tools = isset( $config['tools'] ) && is_array( $config['tools'] ) ? $config['tools'] : array();
 	$promoted   = direct_tools();
-	$tools      = array();
+	$anonymous  = ! is_user_logged_in() && allow_anonymous_access();
+	if ( $anonymous ) {
+		$meta_tools = array();
+	}
+	$tools = array();
 	foreach ( wp_get_abilities() as $ability ) {
 		$name = $ability->get_name();
-		if ( in_array( $name, $promoted, true ) && is_promotable( $ability ) ) {
+		if ( ( $anonymous || in_array( $name, $promoted, true ) ) && is_promotable( $ability ) ) {
 			$tools[] = $name;
 		}
 	}
@@ -357,16 +388,17 @@ function report(): array {
 			$reason = __( 'no public flag set', 'mcp-oauth' );
 		}
 		$rows[] = array(
-			'name'       => $name,
-			'label'      => $ability->get_label(),
-			'type'       => type( $ability ),
-			'visible'    => $visible,
-			'locked'     => $locked,
-			'override'   => in_array( $name, $hidden, true ) && ! $visible,
-			'reason'     => $reason,
-			'direct'     => in_array( $name, $promoted, true ),
-			'promotable' => is_promotable( $ability ),
-			'tool_type'  => 0 !== strpos( $name, 'mcp-adapter/' ) && 'tool' === type( $ability ),
+			'name'        => $name,
+			'label'       => $ability->get_label(),
+			'description' => $ability->get_description(),
+			'type'        => type( $ability ),
+			'visible'     => $visible,
+			'locked'      => $locked,
+			'override'    => in_array( $name, $hidden, true ) && ! $visible,
+			'reason'      => $reason,
+			'direct'      => in_array( $name, $promoted, true ),
+			'promotable'  => is_promotable( $ability ),
+			'tool_type'   => 0 !== strpos( $name, 'mcp-adapter/' ) && 'tool' === type( $ability ),
 		);
 	}
 	usort(
@@ -376,4 +408,11 @@ function report(): array {
 		}
 	);
 	return $rows;
+}
+
+/**
+ * Opt in to logged-out MCP and WebMCP access. Ability permissions still apply.
+ */
+function allow_anonymous_access(): bool {
+	return (bool) apply_filters( 'mcp_oauth_allow_anonymous_access', false );
 }

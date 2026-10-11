@@ -43,9 +43,17 @@ Update or remove the standalone plugin at will — MCP Connect keeps working eit
 
 MCP Connect also exposes WordPress abilities to AI agents visiting the site through the [WebMCP browser API](https://github.com/webmachinelearning/webmcp). It registers tools on the front end and in wp-admin, using `document.modelContext.registerTool()` with fallbacks for older browser implementations. Browsers without WebMCP support simply skip registration. HTTPS or a browser-trusted loopback origin is required.
 
-The **WebMCP** tab under **Tools → MCP Connect** controls the bridge, public discovery, and each ability's WebMCP visibility. Abilities default to signed-in discovery; public discovery is off by default. Each execution runs as the current visitor and checks the ability's permissions and input schema. Write requests from signed-in users also require a security nonce. Abilities hidden from MCP, explicitly opted out with `meta.mcp.public = false`, or marked `wmcp_visibility = private` stay hidden from WebMCP. The adapter's internal meta-tools are excluded.
+The **Abilities** tab under **Tools → MCP Connect** has one searchable list with descriptions and one hide/show choice for both MCP and WebMCP. Technical details and MCP direct-tool shortcuts are collapsed by default. The **WebMCP** tab enables the browser bridge and reports its status. Every execution checks the current user's permissions and input schema. Signed-in browser requests also require a security nonce. Hidden abilities and abilities explicitly opted out with `meta.mcp.public = false` or `wmcp_visibility = private` remain unavailable through both protocols.
 
-The bridge includes search posts, get a post, list categories, and submit a comment abilities. These abilities are also available through MCP. Existing `wmcp_*` settings and filters from WebMCP Abilities are preserved, including migration of its older allowlist. If that plugin remains active, it owns WebMCP registration; MCP Connect does not register a second script or duplicate routes. You can deactivate it to use the integrated bridge. Set `WEBMCP_PLUGIN_DIR=/path/to/webmcp-abilities` to test coexistence in the e2e suite.
+Logged-out access is disabled and has no admin setting. To explicitly enable it for both protocols, use:
+
+```php
+add_filter( 'mcp_oauth_allow_anonymous_access', '__return_true' );
+```
+
+Ability permission callbacks still apply. Anonymous MCP requests use a stateless transport and receive visible abilities as direct tools, avoiding the adapter's authenticated discovery/execute meta-tools. Custom MCP servers retain their own transport permission callbacks. Older public-discovery options and audience declarations do not enable anonymous access.
+
+The bridge includes search posts, get a post, list categories, and submit a comment abilities, available through both protocols. Existing hidden WebMCP choices and older allowlists are preserved as shared visibility choices. If WebMCP Abilities remains active, it owns browser registration and its own settings; deactivate it to use the integrated bridge. Set `WEBMCP_PLUGIN_DIR=/path/to/webmcp-abilities` to test coexistence in the e2e suite.
 
 The REST endpoints remain under `webmcp/v1` for compatibility. Browser discovery is refreshed on each page load so visibility and permission changes are reflected immediately.
 

@@ -65,16 +65,6 @@ class Settings {
 				'sanitize_callback' => 'rest_sanitize_boolean',
 			)
 		);
-
-		register_setting(
-			'mcp_connect_webmcp',
-			self::OPTION_DISCOVERY_PUBLIC,
-			array(
-				'type'              => 'boolean',
-				'default'           => false,
-				'sanitize_callback' => 'rest_sanitize_boolean',
-			)
-		);
 	}
 
 	/**
@@ -90,19 +80,7 @@ class Settings {
 	 * Whether public (unauthenticated) discovery is enabled.
 	 */
 	public function is_discovery_public(): bool {
-		$public = (bool) get_option( self::OPTION_DISCOVERY_PUBLIC, false );
-
-		/**
-		 * Filter whether tool discovery requires authentication.
-		 *
-		 * When true, unauthenticated requests to the /tools endpoint return 401.
-		 * Execution checks each ability's visibility and permission callback.
-		 *
-		 * @param bool $require_auth Default true (authenticated required).
-		 */
-		$require_auth = apply_filters( 'wmcp_tools_require_auth', ! $public );
-
-		return ! $require_auth;
+		return \MCP_OAuth\Abilities\allow_anonymous_access();
 	}
 
 	/**

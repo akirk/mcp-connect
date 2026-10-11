@@ -28,6 +28,7 @@ defined( 'ABSPATH' ) || exit;
  * Hook everything.
  */
 function register(): void {
+	add_filter( 'rest_endpoints', __NAMESPACE__ . '\anonymous_endpoints' );
 	add_filter( 'determine_current_user', __NAMESPACE__ . '\resolve_bearer', 30 );
 	add_filter( 'rest_authentication_errors', __NAMESPACE__ . '\reject_invalid_bearer', 5 );
 	add_filter( 'rest_request_before_callbacks', __NAMESPACE__ . '\authorize_route', 5, 3 );
@@ -201,7 +202,7 @@ function authorize_route( $result, $handler, $request ) {
 		return $result;
 	}
 
-	if ( $server && null === $result && 0 === get_current_user_id() && ! has_bearer_scheme() && 'OPTIONS' !== $request->get_method() ) {
+	if ( $server && null === $result && 0 === get_current_user_id() && ! has_bearer_scheme() && ! \MCP_OAuth\Abilities\allow_anonymous_access() && 'OPTIONS' !== $request->get_method() ) {
 		return new WP_Error( 'rest_oauth_required', __( 'Authentication required.', 'mcp-oauth' ), array( 'status' => 401 ) );
 	}
 	return $result;
@@ -263,4 +264,69 @@ function challenge( $server, string $error = '', string $description = '' ): str
 	}
 	$parts[] = 'scope="' . \MCP_OAuth\SCOPE . '"';
 	return 'Bearer ' . implode( ', ', $parts );
+}
+
+/**
+ * Allow opt-in anonymous access through transports using the adapter's default permissions.
+ * Custom server authentication and invalid credentials retain their checks.
+ *
+ * @param array $endpoints REST endpoints.
+ * @return array
+ */
+function anonymous_endpoints( array $endpoints ): array {
+	if ( is_user_logged_in() || has_bearer_scheme() || ! \MCP_OAuth\Abilities\allow_anonymous_access() ) {
+		return $endpoints;
+	}
+	foreach ( $endpoints as $route => &$handlers ) {
+		$server = Servers\for_route( $route );
+		if ( ! $server || Servers\route( $server ) !== $route || null !== $server->get_transport_permission_callback() ) {
+			continue;
+		}
+		foreach ( $handlers as &$handler ) {
+			if ( is_array( $handler ) && isset( $handler['permission_callback'] ) && is_array( $handler['permission_callback'] ) && $handler['permission_callback'][0] instanceof \WP\MCP\Transport\HttpTransport ) {
+				$handler['permission_callback'] = '__return_true';
+				$handler['callback'] = __NAMESPACE__ . '\anonymous_request';
+			}
+		}
+		unset( $handler );
+	}
+	unset( $handlers );
+	return $endpoints;
+}
+
+/**
+ * Serve explicitly enabled anonymous MCP requests without user-bound sessions.
+ * The adapter's handlers still check the backing abilities' permissions.
+ *
+ * @param WP_REST_Request $request Request.
+ * @return \WP_REST_Response
+ */
+function anonymous_request( WP_REST_Request $request ): \WP_REST_Response {
+	if ( 'POST' !== $request->get_method() ) {
+		return new \WP_REST_Response( null, 405 );
+	}
+	$body = $request->get_json_params();
+	if ( ! is_array( $body ) || ! isset( $body['jsonrpc'] ) ) {
+		return new \WP_REST_Response( \WP\MCP\Infrastructure\ErrorHandling\McpErrorFactory::invalid_request( null, 'Expected a JSON-RPC request.' )->toArray(), 400 );
+	}
+	$valid = \WP\MCP\Infrastructure\ErrorHandling\McpErrorFactory::validate_jsonrpc_message( $body );
+	if ( isset( $body['method'] ) && ( ! is_string( $body['method'] ) || ( isset( $body['params'] ) && ! is_array( $body['params'] ) ) || ( isset( $body['id'] ) && ! is_string( $body['id'] ) && ! is_int( $body['id'] ) && ! is_float( $body['id'] ) ) ) ) {
+		$valid = \WP\MCP\Infrastructure\ErrorHandling\McpErrorFactory::invalid_request( null, 'Invalid method, parameters or request ID.' );
+	}
+	if ( true !== $valid ) {
+		return new \WP_REST_Response( $valid->toArray(), 400 );
+	}
+	if ( ! isset( $body['method'], $body['id'] ) ) {
+		return new \WP_REST_Response( null, 202 );
+	}
+	$server = Servers\for_route( $request->get_route() );
+	$factory = new \WP\MCP\Core\McpTransportFactory( $server );
+	$context = $factory->create_transport_context();
+	$result = $context->request_router->route_request( $body['method'], $body['params'] ?? array(), $body['id'], 'anonymous-http' );
+	if ( isset( $result['error'] ) ) {
+		$response = \WP\MCP\Transport\Infrastructure\JsonRpcResponseBuilder::create_error_response( $body['id'], $result['error'] );
+	} else {
+		$response = \WP\MCP\Transport\Infrastructure\JsonRpcResponseBuilder::create_success_response( $body['id'], $result );
+	}
+	return new \WP_REST_Response( $response );
 }

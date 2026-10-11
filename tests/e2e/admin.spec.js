@@ -43,7 +43,7 @@ test( 'abilities are exposed by default and can be hidden with the eye toggle', 
 	expect( await oauth.discoverAbilities( tokens.access_token ), 'meta.mcp.public=false stays hidden' ).not.toContain( 'demo/opted-out' );
 
 	await adminPage.goto( ABILITIES );
-	await expect( adminPage.locator( 'tr[data-ability="mcp-adapter/discover-abilities"]' ), 'the adapter’s own abilities are listed even when the registry initialized before the adapter' ).toBeVisible();
+	await expect( adminPage.locator( 'tr[data-ability="mcp-adapter/discover-abilities"]' ), 'internal tools are kept on the Tools tab' ).toHaveCount( 0 );
 	const row = adminPage.locator( 'tr[data-ability="demo/list-trips"]' );
 	const eye = row.locator( '.mcp-oauth-eye' );
 	await expect( adminPage.locator( 'tr[data-ability="demo/opted-out"] .mcp-oauth-eye' ), 'opted-out abilities have no toggle' ).toHaveCount( 0 );
@@ -80,6 +80,7 @@ test( 'abilities can be promoted to tools of their own with the Tool checkbox', 
 	await expect( adminPage.locator( '#mcp-oauth-direct-count' ) ).toHaveText( '0' );
 	await expect( adminPage.locator( 'tr[data-ability="demo/opted-out"] .mcp-oauth-tool' ), 'a hidden ability cannot be a tool' ).toBeDisabled();
 
+	await adminPage.locator( 'tr[data-ability="demo/list-trips"] summary' ).click();
 	const tick = adminPage.locator( 'tr[data-ability="demo/list-trips"] .mcp-oauth-tool' );
 	const promote = adminPage.waitForResponse( ( r ) => r.url().includes( 'abilities/tool' ) );
 	await tick.check();
@@ -105,6 +106,7 @@ test( 'the Tools tab shows what the server hands to a client', async ( { adminPa
 
 	await adminPage.goto( ABILITIES );
 	const promote = adminPage.waitForResponse( ( r ) => r.url().includes( 'abilities/tool' ) );
+	await adminPage.locator( 'tr[data-ability="demo/list-trips"] summary' ).click();
 	await adminPage.locator( 'tr[data-ability="demo/list-trips"] .mcp-oauth-tool' ).check();
 	await promote;
 
@@ -115,6 +117,7 @@ test( 'the Tools tab shows what the server hands to a client', async ( { adminPa
 
 	await adminPage.goto( ABILITIES );
 	const demote = adminPage.waitForResponse( ( r ) => r.url().includes( 'abilities/tool' ) );
+	await adminPage.locator( 'tr[data-ability="demo/list-trips"] summary' ).click();
 	await adminPage.locator( 'tr[data-ability="demo/list-trips"] .mcp-oauth-tool' ).uncheck();
 	await demote;
 } );

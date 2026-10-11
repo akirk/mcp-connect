@@ -144,6 +144,7 @@ namespace {
 	function delete_option( $name ) { unset( $GLOBALS['wp_test']['options'][ $name ] ); return true; }
 	function get_transient( $name ) { return $GLOBALS['wp_test']['transients'][ $name ] ?? false; }
 	function set_transient( $name, $value, $ttl = 0 ) { $GLOBALS['wp_test']['transients'][ $name ] = $value; return true; }
+	function wp_cache_flush_group( $group ) { return true; }
 	function delete_transient( $name ) { unset( $GLOBALS['wp_test']['transients'][ $name ] ); return true; }
 	function wp_next_scheduled( $hook ) { return false; }
 	function wp_schedule_event( $ts, $recurrence, $hook ) { return true; }

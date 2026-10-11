@@ -120,26 +120,6 @@ class REST_API {
 			)
 		);
 
-		register_rest_route(
-			self::NAMESPACE,
-			'/abilities/anonymous',
-			array(
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'toggle_anonymous' ),
-				'permission_callback' => $admin_only,
-				'args'                => array(
-					'ability'   => array(
-						'type'     => 'string',
-						'required' => true,
-					),
-					'anonymous' => array(
-						'type'     => 'boolean',
-						'required' => true,
-					),
-				),
-			)
-		);
-
 		// Nonce refresh endpoint.
 		register_rest_route(
 			self::NAMESPACE,
@@ -519,37 +499,7 @@ class REST_API {
 
 		$name = (string) $request->get_param( 'ability' );
 
-		if ( $request->get_param( 'hide' ) ) {
-			$this->settings->set_visibility_override( $name, Settings::VISIBILITY_PRIVATE );
-		} else {
-			$this->settings->set_visibility_override(
-				$name,
-				$this->bridge->declared_visibility( $ability ) ?? Settings::DEFAULT_VISIBILITY
-			);
-		}
-
-		return $this->toggle_response( $name, $ability );
-	}
-
-	/**
-	 * Advertise an ability to logged-out visitors, or restrict it to signed-in ones.
-	 *
-	 * @param \WP_REST_Request $request Request object.
-	 * @return \WP_REST_Response|\WP_Error
-	 */
-	public function toggle_anonymous( \WP_REST_Request $request ) {
-		$ability = $this->toggle_target( $request );
-
-		if ( is_wp_error( $ability ) ) {
-			return $ability;
-		}
-
-		$name = (string) $request->get_param( 'ability' );
-
-		$this->settings->set_visibility_override(
-			$name,
-			$request->get_param( 'anonymous' ) ? Settings::VISIBILITY_PUBLIC : Settings::VISIBILITY_AUTHENTICATED
-		);
+		\MCP_OAuth\Abilities\set_hidden( $name, (bool) $request->get_param( 'hide' ) );
 
 		return $this->toggle_response( $name, $ability );
 	}

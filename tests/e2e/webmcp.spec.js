@@ -1,6 +1,7 @@
 const { test, expect } = require( './fixtures' );
 
 const WEBMCP = '/wp-admin/tools.php?page=mcp-connect&tab=webmcp';
+const ABILITIES = '/wp-admin/tools.php?page=mcp-connect&tab=abilities';
 
 async function mockWebMCP( page, legacy = false ) {
 	await page.addInitScript( ( legacy ) => {
@@ -28,11 +29,24 @@ for ( const legacy of [ false, true ] ) {
 	} );
 }
 
-test( 'WebMCP settings and visibility persist and block execution', async ( { adminPage, request } ) => {
+test( 'the shared Abilities list uses one visibility control for MCP and WebMCP', async ( { adminPage, request } ) => {
 	await adminPage.goto( WEBMCP );
-	const row = adminPage.locator( '.wmcp tr[data-ability="demo/list-trips"]' );
-	const eye = row.locator( '.wmcp-eye' );
-	await expect( adminPage.locator( '.wmcp tr[data-ability="demo/opted-out"] .wmcp-eye' ) ).toBeDisabled();
+	await expect( adminPage.locator( 'tr[data-ability]' ), 'WebMCP settings do not repeat the ability list' ).toHaveCount( 0 );
+	await adminPage.goto( ABILITIES );
+	await expect( adminPage.locator( '.mcp-oauth-scroll thead th' ) ).toHaveText( [ 'Ability', 'What it does' ] );
+	await adminPage.locator( '#mcp-oauth-ability-search' ).fill( 'list trips' );
+	await expect( adminPage.locator( '.mcp-oauth-ability:visible' ) ).toHaveCount( 1 );
+	await adminPage.locator( '#mcp-oauth-ability-search' ).fill( 'no-such-ability' );
+	await expect( adminPage.locator( '#mcp-oauth-no-abilities' ) ).toBeVisible();
+	await adminPage.locator( '#mcp-oauth-ability-search' ).fill( '' );
+	await adminPage.locator( '#mcp-oauth-ability-filter' ).selectOption( 'hidden' );
+	await expect( adminPage.locator( '.mcp-oauth-ability:visible' ) ).toHaveCount( 1 );
+	await adminPage.locator( '#mcp-oauth-ability-filter' ).selectOption( 'all' );
+	const row = adminPage.locator( 'tr[data-ability="demo/list-trips"]' );
+	await expect( row.locator( '.mcp-oauth-ability-description' ) ).not.toBeEmpty();
+	await expect( row.locator( 'select' ) ).toHaveCount( 0 );
+	await expect( row.locator( '.mcp-oauth-tool' ) ).not.toBeVisible();
+	const eye = row.locator( '.mcp-oauth-eye' );
 	await eye.click();
 	await expect( eye ).toHaveAttribute( 'data-visible', '0' );
 	await adminPage.reload();
@@ -53,6 +67,7 @@ test( 'WebMCP settings and visibility persist and block execution', async ( { ad
 	const deniedToggle = await request.post( '/wp-json/webmcp/v1/abilities/visibility', { data: { ability: 'demo/list-trips', hide: true } } );
 	expect( deniedToggle.status() ).toBe( 401 );
 
+	await adminPage.goto( WEBMCP );
 	await adminPage.locator( '#wmcp_enabled' ).uncheck();
 	await adminPage.locator( '#submit' ).click();
 	await expect( adminPage.locator( '#wmcp_enabled' ) ).not.toBeChecked();
@@ -62,29 +77,34 @@ test( 'WebMCP settings and visibility persist and block execution', async ( { ad
 	await expect( adminPage.locator( '#wmcp_enabled' ) ).toBeChecked();
 } );
 
-test( 'public discovery only exposes public abilities and input validation remains enforced', async ( { adminPage, page } ) => {
+test( 'logged-out discovery has no admin switch', async ( { adminPage, request } ) => {
 	await adminPage.goto( WEBMCP );
-	await adminPage.locator( '#wmcp_discovery_public' ).check();
-	await adminPage.locator( '#submit' ).click();
-	await mockWebMCP( page );
-	await page.goto( '/' );
-	await expect.poll( () => page.evaluate( () => Object.keys( window.webmcpTools ) ) ).toContain( 'wp_search-posts' );
-	expect( await page.evaluate( () => Object.keys( window.webmcpTools ) ) ).not.toContain( 'demo_list-trips' );
-	const result = await page.evaluate( () => window.webmcpTools[ 'wp_search-posts' ].execute( { query: 'Hello' } ) );
-	expect( Array.isArray( JSON.parse( result.content[ 0 ].text ) ) ).toBe( true );
-	const invalid = await page.evaluate( async () => {
-		try { await window.webmcpTools[ 'wp_search-posts' ].execute( {} ); return null; } catch ( error ) { return error.message; }
-	} );
-	expect( invalid ).toBeTruthy();
-	await adminPage.locator( '#wmcp_discovery_public' ).uncheck();
-	await adminPage.locator( '#submit' ).click();
-	// Previously discovered definitions must not be registered after logging out or disabling discovery.
-	const deniedDiscovery = page.waitForResponse( ( response ) => response.url().includes( 'webmcp/v1/tools' ) );
-	await page.reload();
-	expect( ( await deniedDiscovery ).status() ).toBe( 401 );
-	expect( await page.evaluate( () => Object.keys( window.webmcpTools ) ) ).toEqual( [] );
+	await expect( adminPage.locator( '#wmcp_discovery_public' ) ).toHaveCount( 0 );
+	expect( ( await request.get( '/wp-json/webmcp/v1/tools' ) ).status() ).toBe( 401 );
+	expect( ( await request.post( '/wp-json/webmcp/v1/abilities/anonymous', { data: { ability: 'wp/search-posts', anonymous: true } } ) ).status() ).toBe( 404 );
 } );
 
+test( 'the anonymous filter enables both protocols while ability permissions still apply', async ( { request } ) => {
+	const headers = { 'X-Demo-Anonymous': '1' };
+	const discovery = await request.get( '/wp-json/webmcp/v1/tools', { headers } );
+	expect( discovery.status() ).toBe( 200 );
+	const names = ( await discovery.json() ).tools.map( ( tool ) => tool.name );
+	expect( names ).toContain( 'wp/search-posts' );
+	expect( names ).not.toContain( 'demo/list-trips' );
+	const endpoint = '/wp-json/mcp/mcp-adapter-default-server';
+	const init = await request.post( endpoint, { headers, data: { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'anonymous-test', version: '1' } } } } );
+	expect( init.status() ).toBe( 200 );
+	const session = init.headers()[ 'mcp-session-id' ];
+	const rpcHeaders = { ...headers, ...( session ? { 'Mcp-Session-Id': session } : {} ) };
+	const call = async ( name, args ) => request.post( endpoint, { headers: rpcHeaders, data: { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name, arguments: args } } } );
+	const allowed = await call( 'wp-search-posts', { query: 'Hello' } );
+	expect( allowed.status() ).toBe( 200 );
+	expect( ( await allowed.json() ).result.isError ).not.toBe( true );
+	const denied = await call( 'demo-list-trips', {} );
+	expect( ( await denied.json() ).result.isError ).toBe( true );
+	const invalid = await request.post( endpoint, { headers: { ...headers, Authorization: 'Bearer invalid-token' }, data: { jsonrpc: '2.0', id: 3, method: 'tools/list' } } );
+	expect( invalid.status() ).toBe( 401 );
+} );
 
 test( 'the standalone WebMCP plugin owns registration when both are active', async ( { adminPage } ) => {
 	test.skip( ! process.env.WEBMCP_PLUGIN_DIR, 'Requires the standalone WebMCP plugin fixture.' );
