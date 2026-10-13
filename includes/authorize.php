@@ -132,7 +132,7 @@ function redirect_error( string $redirect_uri, string $state, string $error, str
  * Stop with an error the client can never receive (no trustworthy redirect URI).
  */
 function fail( string $message, int $status = 400 ): void {
-	wp_die( esc_html( $message ), esc_html__( 'Authorization failed', 'mcp-oauth' ), array( 'response' => (int) $status ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- An integer.
+	wp_die( esc_html( $message ), esc_html__( 'Authorization failed', 'mcp-connect' ), array( 'response' => (int) $status ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- An integer.
 }
 
 /**
@@ -145,7 +145,7 @@ function handle(): void {
 		exit;
 	}
 	if ( ! current_user_can( \MCP_OAuth\authorize_capability() ) ) {
-		fail( __( 'Your account is not allowed to connect AI clients to this site.', 'mcp-oauth' ), 403 );
+		fail( __( 'Your account is not allowed to connect AI clients to this site.', 'mcp-connect' ), 403 );
 	}
 	if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) {
 		handle_consent();
@@ -165,11 +165,11 @@ function handle_request(): array {
 	$client_id = param( 'client_id' );
 	$client    = Storage\get_client( $client_id );
 	if ( ! $client ) {
-		fail( __( 'Unknown client. The AI client has to register with this site before it can sign in.', 'mcp-oauth' ) );
+		fail( __( 'Unknown client. The AI client has to register with this site before it can sign in.', 'mcp-connect' ) );
 	}
 	$redirect_uri = param( 'redirect_uri' );
 	if ( '' === $redirect_uri || ! redirect_uri_registered( $redirect_uri, $client['redirect_uris'] ) ) {
-		fail( __( 'The redirect URI is not registered for this client.', 'mcp-oauth' ) );
+		fail( __( 'The redirect URI is not registered for this client.', 'mcp-connect' ) );
 	}
 	$state = param( 'state' );
 
@@ -225,13 +225,13 @@ function handle_consent(): void {
 	$pending = get_transient( PENDING_PREFIX . $token );
 	delete_transient( PENDING_PREFIX . $token );
 	if ( ! is_array( $pending ) || get_current_user_id() !== (int) $pending['user_id'] ) {
-		fail( __( 'This authorization request has expired. Start again from your AI client.', 'mcp-oauth' ) );
+		fail( __( 'This authorization request has expired. Start again from your AI client.', 'mcp-connect' ) );
 	}
 	if ( empty( $_POST['approve'] ) ) {
 		redirect_error( $pending['redirect_uri'], $pending['state'], 'access_denied', 'The user denied the request.' );
 	}
 	if ( ! Storage\get_client( $pending['client_id'] ) ) {
-		fail( __( 'The client is no longer registered.', 'mcp-oauth' ) );
+		fail( __( 'The client is no longer registered.', 'mcp-connect' ) );
 	}
 
 	$code = Storage\create_code( $pending['client_id'], get_current_user_id(), $pending['redirect_uri'], $pending['code_challenge'], \MCP_OAuth\SCOPE, $pending['resource'] );
@@ -264,7 +264,7 @@ function render( array $pending ): void {
 	$server = $pending['server'];
 	$user   = wp_get_current_user();
 
-	login_header( __( 'Connect an AI client', 'mcp-oauth' ) );
+	login_header( __( 'Connect an AI client', 'mcp-connect' ) );
 	?>
 	<style>
 		#login { width: 400px; }
@@ -282,7 +282,7 @@ function render( array $pending ): void {
 			<?php
 			printf(
 				/* translators: %s: client name */
-				esc_html__( '%s wants to connect to this site', 'mcp-oauth' ),
+				esc_html__( '%s wants to connect to this site', 'mcp-connect' ),
 				esc_html( $client['client_name'] )
 			);
 			?>
@@ -291,7 +291,7 @@ function render( array $pending ): void {
 			<?php
 			printf(
 				/* translators: 1: user display name, 2: user login, 3: MCP server name */
-				esc_html__( 'It will act as %1$s (%2$s) through the MCP server “%3$s” and can do whatever your account may do there.', 'mcp-oauth' ),
+				esc_html__( 'It will act as %1$s (%2$s) through the MCP server “%3$s” and can do whatever your account may do there.', 'mcp-connect' ),
 				'<strong>' . esc_html( $user->display_name ) . '</strong>',
 				esc_html( $user->user_login ),
 				esc_html( $server->get_server_name() )
@@ -300,31 +300,31 @@ function render( array $pending ): void {
 		</p>
 		<dl>
 			<?php if ( ! empty( $client['client_uri'] ) ) : ?>
-				<dt><?php esc_html_e( 'Client', 'mcp-oauth' ); ?></dt>
+				<dt><?php esc_html_e( 'Client', 'mcp-connect' ); ?></dt>
 				<dd><a href="<?php echo esc_url( $client['client_uri'] ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $client['client_uri'] ); ?></a></dd>
 			<?php endif; ?>
-			<dt><?php esc_html_e( 'Returns to', 'mcp-oauth' ); ?></dt>
+			<dt><?php esc_html_e( 'Returns to', 'mcp-connect' ); ?></dt>
 			<dd><code><?php echo esc_html( destination_label( param( 'redirect_uri' ) ) ); ?></code></dd>
-			<dt><?php esc_html_e( 'MCP endpoint', 'mcp-oauth' ); ?></dt>
+			<dt><?php esc_html_e( 'MCP endpoint', 'mcp-connect' ); ?></dt>
 			<dd><code><?php echo esc_html( Servers\resource( $server ) ); ?></code></dd>
 		</dl>
-		<p class="description"><?php esc_html_e( 'The client name is provided by the client itself. Only connect clients you trust. You can revoke access at any time under Tools → MCP Connect.', 'mcp-oauth' ); ?></p>
+		<p class="description"><?php esc_html_e( 'The client name is provided by the client itself. Only connect clients you trust. You can revoke access at any time under Tools → MCP Connect.', 'mcp-connect' ); ?></p>
 		<?php wp_nonce_field( 'mcp_oauth_consent_' . $pending['token'] ); ?>
 		<input type="hidden" name="pending" value="<?php echo esc_attr( $pending['token'] ); ?>">
 		<p class="submit">
-			<button type="submit" name="approve" value="1" class="button button-primary button-large"><?php esc_html_e( 'Connect', 'mcp-oauth' ); ?></button>
-			<button type="submit" name="deny" value="1" class="button button-large"><?php esc_html_e( 'Deny', 'mcp-oauth' ); ?></button>
+			<button type="submit" name="approve" value="1" class="button button-primary button-large"><?php esc_html_e( 'Connect', 'mcp-connect' ); ?></button>
+			<button type="submit" name="deny" value="1" class="button button-large"><?php esc_html_e( 'Deny', 'mcp-connect' ); ?></button>
 		</p>
 	</form>
 	<p id="nav">
 		<?php
 		printf(
 			/* translators: %s: user login */
-			esc_html__( 'Not %s?', 'mcp-oauth' ),
+			esc_html__( 'Not %s?', 'mcp-connect' ),
 			esc_html( $user->user_login )
 		);
 		?>
-		<a href="<?php echo esc_url( wp_logout_url( request_url() ) ); ?>"><?php esc_html_e( 'Log out', 'mcp-oauth' ); ?></a>
+		<a href="<?php echo esc_url( wp_logout_url( request_url() ) ); ?>"><?php esc_html_e( 'Log out', 'mcp-connect' ); ?></a>
 	</p>
 	<?php
 	login_footer();

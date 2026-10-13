@@ -8,9 +8,18 @@
 		<exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames" />
 	</rule>
 	<rule ref="WordPress-Extra" />
+	<!-- Directory review checks also used by Cook App and Travel App. -->
+	<config name="testVersion" value="7.4-" />
+	<rule ref="PHPCompatibilityWP" />
+	<rule ref="Generic.PHP.Syntax" />
+	<rule ref="WordPress.WP.Capabilities" />
+	<rule ref="WordPress.WP.DiscouragedConstants" />
+	<rule ref="WordPress.WP.EnqueuedResources" />
 	<rule ref="WordPress.WP.I18n">
 		<properties>
-			<property name="text_domain" type="array" value="mcp-oauth" />
+			<property name="text_domain" type="array">
+				<element value="mcp-connect" />
+			</property>
 		</properties>
 	</rule>
 	<arg name="extensions" value="php"/>

@@ -191,26 +191,26 @@ class Ability_Bridge {
 	 */
 	private function reason( string $visibility, ?string $declared, ?string $override, bool $locked ): string {
 		if ( $locked ) {
-			return __( 'its own plugin asked to keep it hidden', 'mcp-oauth' );
+			return __( 'its own plugin asked to keep it hidden', 'mcp-connect' );
 		}
 
 		if ( null !== $override && $override === $visibility ) {
-			return __( 'set here', 'mcp-oauth' );
+			return __( 'set here', 'mcp-connect' );
 		}
 
 		if ( null !== $override ) {
-			return __( 'overridden in code', 'mcp-oauth' );
+			return __( 'overridden in code', 'mcp-connect' );
 		}
 
 		if ( null !== $declared && $declared === $visibility ) {
-			return __( 'its own plugin registered it this way', 'mcp-oauth' );
+			return __( 'its own plugin registered it this way', 'mcp-connect' );
 		}
 
 		if ( Settings::DEFAULT_VISIBILITY === $visibility ) {
-			return __( 'the default', 'mcp-oauth' );
+			return __( 'the default', 'mcp-connect' );
 		}
 
-		return __( 'overridden in code', 'mcp-oauth' );
+		return __( 'overridden in code', 'mcp-connect' );
 	}
 
 	/**
@@ -246,7 +246,7 @@ class Ability_Bridge {
 				__METHOD__,
 				sprintf(
 					/* translators: %s: Ability name. */
-					esc_html__( 'The ability "%s" was omitted from WebMCP because its input schema contains an unsupported $ref.', 'mcp-oauth' ),
+					esc_html__( 'The ability "%s" was omitted from WebMCP because its input schema contains an unsupported $ref.', 'mcp-connect' ),
 					esc_html( $name )
 				),
 				'0.8.0'
@@ -351,7 +351,7 @@ class Ability_Bridge {
 		if ( $truncated ) {
 			_doing_it_wrong(
 				__METHOD__,
-				esc_html__( 'The WebMCP input schema was capped at five schema levels. Deeper child schemas were replaced with empty schemas; the ability still validates the full input.', 'mcp-oauth' ),
+				esc_html__( 'The WebMCP input schema was capped at five schema levels. Deeper child schemas were replaced with empty schemas; the ability still validates the full input.', 'mcp-connect' ),
 				'0.8.0'
 			);
 		}

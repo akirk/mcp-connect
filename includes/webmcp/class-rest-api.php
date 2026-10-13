@@ -144,7 +144,7 @@ class REST_API {
 	 */
 	public function tools_permission_check( \WP_REST_Request $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by REST API signature.
 		if ( ! $this->settings->is_enabled() ) {
-			return new \WP_Error( 'wmcp_disabled', __( 'WebMCP Abilities is not enabled.', 'mcp-oauth' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'wmcp_disabled', __( 'WebMCP Abilities is not enabled.', 'mcp-connect' ), array( 'status' => 404 ) );
 		}
 
 		// Rate-limit discovery by IP.
@@ -152,7 +152,7 @@ class REST_API {
 		if ( ! $this->rate_limiter->check_discovery( $ip ) ) {
 			return new \WP_Error(
 				'wmcp_rate_limited',
-				__( 'Too many requests. Please slow down.', 'mcp-oauth' ),
+				__( 'Too many requests. Please slow down.', 'mcp-connect' ),
 				array( 'status' => 429 )
 			);
 		}
@@ -164,7 +164,7 @@ class REST_API {
 
 		// Otherwise require authentication.
 		if ( ! is_user_logged_in() ) {
-			return new \WP_Error( 'wmcp_auth_required', __( 'Authentication required.', 'mcp-oauth' ), array( 'status' => 401 ) );
+			return new \WP_Error( 'wmcp_auth_required', __( 'Authentication required.', 'mcp-connect' ), array( 'status' => 401 ) );
 		}
 
 		return true;
@@ -216,7 +216,7 @@ class REST_API {
 	 */
 	public function execute_permission_check( \WP_REST_Request $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by REST API signature.
 		if ( ! $this->settings->is_enabled() ) {
-			return new \WP_Error( 'wmcp_disabled', __( 'WebMCP Abilities is not enabled.', 'mcp-oauth' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'wmcp_disabled', __( 'WebMCP Abilities is not enabled.', 'mcp-connect' ), array( 'status' => 404 ) );
 		}
 
 		return true;
@@ -237,7 +237,7 @@ class REST_API {
 			return new \WP_REST_Response(
 				array(
 					'code'    => 'wmcp_payload_too_large',
-					'message' => __( 'Request payload exceeds the maximum allowed size.', 'mcp-oauth' ),
+					'message' => __( 'Request payload exceeds the maximum allowed size.', 'mcp-connect' ),
 				),
 				400
 			);
@@ -248,7 +248,7 @@ class REST_API {
 			return new \WP_REST_Response(
 				array(
 					'code'    => 'wmcp_abilities_unavailable',
-					'message' => __( 'WordPress Abilities API is not available.', 'mcp-oauth' ),
+					'message' => __( 'WordPress Abilities API is not available.', 'mcp-connect' ),
 				),
 				500
 			);
@@ -258,7 +258,7 @@ class REST_API {
 			return new \WP_REST_Response(
 				array(
 					'code'    => 'wmcp_not_found',
-					'message' => __( 'Tool not found.', 'mcp-oauth' ),
+					'message' => __( 'Tool not found.', 'mcp-connect' ),
 				),
 				404
 			);
@@ -278,7 +278,7 @@ class REST_API {
 			return new \WP_REST_Response(
 				array(
 					'code'    => 'wmcp_not_found',
-					'message' => __( 'Tool not found.', 'mcp-oauth' ),
+					'message' => __( 'Tool not found.', 'mcp-connect' ),
 				),
 				404
 			);
@@ -297,7 +297,7 @@ class REST_API {
 			return new \WP_REST_Response(
 				array(
 					'code'    => 'wmcp_forbidden',
-					'message' => __( 'You do not have permission to use this tool.', 'mcp-oauth' ),
+					'message' => __( 'You do not have permission to use this tool.', 'mcp-connect' ),
 				),
 				403
 			);
@@ -319,7 +319,7 @@ class REST_API {
 				return new \WP_REST_Response(
 					array(
 						'code'    => 'wmcp_invalid_nonce',
-						'message' => __( 'Invalid or expired security token.', 'mcp-oauth' ),
+						'message' => __( 'Invalid or expired security token.', 'mcp-connect' ),
 					),
 					403
 				);
@@ -351,7 +351,7 @@ class REST_API {
 			$response = new \WP_REST_Response(
 				array(
 					'code'    => 'wmcp_rate_limited',
-					'message' => __( 'Rate limit exceeded. Please wait before making more requests.', 'mcp-oauth' ),
+					'message' => __( 'Rate limit exceeded. Please wait before making more requests.', 'mcp-connect' ),
 				),
 				429
 			);
@@ -386,7 +386,7 @@ class REST_API {
 			return new \WP_REST_Response(
 				array(
 					'code'    => 'wmcp_execution_error',
-					'message' => __( 'Tool execution failed.', 'mcp-oauth' ),
+					'message' => __( 'Tool execution failed.', 'mcp-connect' ),
 				),
 				500
 			);
@@ -462,7 +462,7 @@ class REST_API {
 		if ( ! function_exists( 'wp_has_ability' ) || ! wp_has_ability( $name ) ) {
 			return new \WP_Error(
 				'wmcp_unknown_ability',
-				__( 'Unknown tool.', 'mcp-oauth' ),
+				__( 'Unknown tool.', 'mcp-connect' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -472,7 +472,7 @@ class REST_API {
 		if ( $this->bridge->is_locked( $ability ) ) {
 			return new \WP_Error(
 				'wmcp_locked_ability',
-				__( 'The plugin that registered this tool asked to keep it hidden.', 'mcp-oauth' ),
+				__( 'The plugin that registered this tool asked to keep it hidden.', 'mcp-connect' ),
 				array( 'status' => 400 )
 			);
 		}

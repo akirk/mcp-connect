@@ -111,12 +111,12 @@ function resolve_bearer( $user_id ) {
 	}
 	$raw = bearer_token();
 	if ( null === $raw || ! Storage\installed() ) {
-		$state['error'] = new WP_Error( 'rest_oauth_invalid_token', __( 'Malformed bearer token.', 'mcp-oauth' ), array( 'status' => 401 ) );
+		$state['error'] = new WP_Error( 'rest_oauth_invalid_token', __( 'Malformed bearer token.', 'mcp-connect' ), array( 'status' => 401 ) );
 		return $user_id;
 	}
 	$token = Storage\find_token( $raw, 'access' );
 	if ( ! $token ) {
-		$state['error'] = new WP_Error( 'rest_oauth_invalid_token', __( 'The access token is invalid, expired or revoked.', 'mcp-oauth' ), array( 'status' => 401 ) );
+		$state['error'] = new WP_Error( 'rest_oauth_invalid_token', __( 'The access token is invalid, expired or revoked.', 'mcp-connect' ), array( 'status' => 401 ) );
 		return $user_id;
 	}
 	$resolving_user_id = (int) $token['user_id'];
@@ -127,7 +127,7 @@ function resolve_bearer( $user_id ) {
 		$resolving_user_id = null;
 	}
 	if ( ! $authorized ) {
-		$state['error'] = new WP_Error( 'rest_oauth_invalid_token', __( 'The authorizing user may no longer use MCP.', 'mcp-oauth' ), array( 'status' => 401 ) );
+		$state['error'] = new WP_Error( 'rest_oauth_invalid_token', __( 'The authorizing user may no longer use MCP.', 'mcp-connect' ), array( 'status' => 401 ) );
 		return $user_id;
 	}
 	Storage\touch_token( $token );
@@ -194,16 +194,16 @@ function authorize_route( $result, $handler, $request ) {
 	if ( null !== $state['token'] ) {
 		// An OAuth identity is only good for the MCP server the token was issued for.
 		if ( ! $server ) {
-			return new WP_Error( 'rest_oauth_route_forbidden', __( 'This access token is only accepted on its MCP endpoint.', 'mcp-oauth' ), array( 'status' => 403 ) );
+			return new WP_Error( 'rest_oauth_route_forbidden', __( 'This access token is only accepted on its MCP endpoint.', 'mcp-connect' ), array( 'status' => 403 ) );
 		}
 		if ( Servers\normalize( (string) $state['token']['resource'] ) !== Servers\normalize( Servers\resource( $server ) ) ) {
-			return new WP_Error( 'rest_oauth_wrong_resource', __( 'This access token was issued for a different MCP server.', 'mcp-oauth' ), array( 'status' => 403 ) );
+			return new WP_Error( 'rest_oauth_wrong_resource', __( 'This access token was issued for a different MCP server.', 'mcp-connect' ), array( 'status' => 403 ) );
 		}
 		return $result;
 	}
 
 	if ( $server && null === $result && 0 === get_current_user_id() && ! has_bearer_scheme() && ! \MCP_OAuth\Abilities\allow_anonymous_access() && 'OPTIONS' !== $request->get_method() ) {
-		return new WP_Error( 'rest_oauth_required', __( 'Authentication required.', 'mcp-oauth' ), array( 'status' => 401 ) );
+		return new WP_Error( 'rest_oauth_required', __( 'Authentication required.', 'mcp-connect' ), array( 'status' => 401 ) );
 	}
 	return $result;
 }
