@@ -194,7 +194,7 @@ function handle( WP_REST_Request $request ): WP_REST_Response {
 
 	$name = sanitize_text_field( (string) ( $body['client_name'] ?? '' ) );
 	if ( '' === $name ) {
-		$name = __( 'Unnamed AI client', 'mcp-oauth' );
+		$name = __( 'Unnamed AI client', 'mcp-connect' );
 	}
 	$name = mb_substr( $name, 0, 191 );
 

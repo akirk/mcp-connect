@@ -34,8 +34,8 @@ class Builtin_Tools {
 		wp_register_ability_category(
 			self::CATEGORY,
 			array(
-				'label'       => __( 'WebMCP', 'mcp-oauth' ),
-				'description' => __( 'Tools exposed to AI agents via the WebMCP browser API.', 'mcp-oauth' ),
+				'label'       => __( 'WebMCP', 'mcp-connect' ),
+				'description' => __( 'Tools exposed to AI agents via the WebMCP browser API.', 'mcp-connect' ),
 			)
 		);
 	}
@@ -72,19 +72,19 @@ class Builtin_Tools {
 		wp_register_ability(
 			'wp/search-posts',
 			array(
-				'label'               => __( 'Search Posts', 'mcp-oauth' ),
-				'description'         => __( 'Search published posts by keyword. Returns titles, excerpts, and URLs.', 'mcp-oauth' ),
+				'label'               => __( 'Search Posts', 'mcp-connect' ),
+				'description'         => __( 'Search published posts by keyword. Returns titles, excerpts, and URLs.', 'mcp-connect' ),
 				'category'            => self::CATEGORY,
 				'input_schema'        => array(
 					'type'       => 'object',
 					'properties' => array(
 						'query' => array(
 							'type'        => 'string',
-							'description' => __( 'The search keyword or phrase.', 'mcp-oauth' ),
+							'description' => __( 'The search keyword or phrase.', 'mcp-connect' ),
 						),
 						'count' => array(
 							'type'        => 'integer',
-							'description' => __( 'Number of results to return (1–50).', 'mcp-oauth' ),
+							'description' => __( 'Number of results to return (1–50).', 'mcp-connect' ),
 							'default'     => 10,
 							'minimum'     => 1,
 							'maximum'     => 50,
@@ -130,7 +130,7 @@ class Builtin_Tools {
 		$count = max( 1, min( 50, (int) ( $input['count'] ?? 10 ) ) );
 
 		if ( '' === $query ) {
-			return new \WP_Error( 'invalid_query', __( 'Search query is required.', 'mcp-oauth' ) );
+			return new \WP_Error( 'invalid_query', __( 'Search query is required.', 'mcp-connect' ) );
 		}
 
 		$posts = get_posts(
@@ -166,19 +166,19 @@ class Builtin_Tools {
 		wp_register_ability(
 			'wp/get-post',
 			array(
-				'label'               => __( 'Get Post', 'mcp-oauth' ),
-				'description'         => __( 'Retrieve a single post by its ID or slug. Returns the full post content, categories, tags, and metadata.', 'mcp-oauth' ),
+				'label'               => __( 'Get Post', 'mcp-connect' ),
+				'description'         => __( 'Retrieve a single post by its ID or slug. Returns the full post content, categories, tags, and metadata.', 'mcp-connect' ),
 				'category'            => self::CATEGORY,
 				'input_schema'        => array(
 					'type'       => 'object',
 					'properties' => array(
 						'id'   => array(
 							'type'        => 'integer',
-							'description' => __( 'Post ID.', 'mcp-oauth' ),
+							'description' => __( 'Post ID.', 'mcp-connect' ),
 						),
 						'slug' => array(
 							'type'        => 'string',
-							'description' => __( 'Post slug (URL name).', 'mcp-oauth' ),
+							'description' => __( 'Post slug (URL name).', 'mcp-connect' ),
 						),
 					),
 				),
@@ -239,12 +239,12 @@ class Builtin_Tools {
 		}
 
 		if ( ! $post instanceof \WP_Post ) {
-			return new \WP_Error( 'not_found', __( 'Post not found.', 'mcp-oauth' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'not_found', __( 'Post not found.', 'mcp-connect' ), array( 'status' => 404 ) );
 		}
 
 		// Only return published posts to unauthenticated users.
 		if ( 'publish' !== $post->post_status && ! current_user_can( 'read_post', $post->ID ) ) {
-			return new \WP_Error( 'not_found', __( 'Post not found.', 'mcp-oauth' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'not_found', __( 'Post not found.', 'mcp-connect' ), array( 'status' => 404 ) );
 		}
 
 		$categories = wp_get_post_categories( $post->ID, array( 'fields' => 'names' ) );
@@ -275,8 +275,8 @@ class Builtin_Tools {
 		wp_register_ability(
 			'wp/get-categories',
 			array(
-				'label'               => __( 'Get Categories', 'mcp-oauth' ),
-				'description'         => __( 'List all post categories with their names, descriptions, and post counts.', 'mcp-oauth' ),
+				'label'               => __( 'Get Categories', 'mcp-connect' ),
+				'description'         => __( 'List all post categories with their names, descriptions, and post counts.', 'mcp-connect' ),
 				'category'            => self::CATEGORY,
 				'input_schema'        => array(
 					'type'       => 'object',
@@ -355,27 +355,27 @@ class Builtin_Tools {
 		wp_register_ability(
 			'wp/submit-comment',
 			array(
-				'label'               => __( 'Submit Comment', 'mcp-oauth' ),
-				'description'         => __( 'Submit a comment on a post. Respects WordPress comment settings including open/closed comments and login requirements.', 'mcp-oauth' ),
+				'label'               => __( 'Submit Comment', 'mcp-connect' ),
+				'description'         => __( 'Submit a comment on a post. Respects WordPress comment settings including open/closed comments and login requirements.', 'mcp-connect' ),
 				'category'            => self::CATEGORY,
 				'input_schema'        => array(
 					'type'       => 'object',
 					'properties' => array(
 						'post_id'      => array(
 							'type'        => 'integer',
-							'description' => __( 'ID of the post to comment on.', 'mcp-oauth' ),
+							'description' => __( 'ID of the post to comment on.', 'mcp-connect' ),
 						),
 						'content'      => array(
 							'type'        => 'string',
-							'description' => __( 'Comment text.', 'mcp-oauth' ),
+							'description' => __( 'Comment text.', 'mcp-connect' ),
 						),
 						'author_name'  => array(
 							'type'        => 'string',
-							'description' => __( 'Commenter name (optional for logged-in users).', 'mcp-oauth' ),
+							'description' => __( 'Commenter name (optional for logged-in users).', 'mcp-connect' ),
 						),
 						'author_email' => array(
 							'type'        => 'string',
-							'description' => __( 'Commenter email (optional for logged-in users).', 'mcp-oauth' ),
+							'description' => __( 'Commenter email (optional for logged-in users).', 'mcp-connect' ),
 						),
 					),
 					'required'   => array( 'post_id', 'content' ),
@@ -428,16 +428,16 @@ class Builtin_Tools {
 		$content = sanitize_textarea_field( $input['content'] ?? '' );
 
 		if ( ! $post_id || '' === $content ) {
-			return new \WP_Error( 'invalid_input', __( 'post_id and content are required.', 'mcp-oauth' ) );
+			return new \WP_Error( 'invalid_input', __( 'post_id and content are required.', 'mcp-connect' ) );
 		}
 
 		$post = get_post( $post_id );
 		if ( ! $post instanceof \WP_Post || 'publish' !== $post->post_status ) {
-			return new \WP_Error( 'not_found', __( 'Post not found.', 'mcp-oauth' ) );
+			return new \WP_Error( 'not_found', __( 'Post not found.', 'mcp-connect' ) );
 		}
 
 		if ( ! comments_open( $post_id ) ) {
-			return new \WP_Error( 'comments_closed', __( 'Comments are closed on this post.', 'mcp-oauth' ) );
+			return new \WP_Error( 'comments_closed', __( 'Comments are closed on this post.', 'mcp-connect' ) );
 		}
 
 		$comment_data = array(
@@ -471,8 +471,8 @@ class Builtin_Tools {
 			'comment_id' => (int) $comment_id,
 			'status'     => $status,
 			'message'    => 'approved' === $status
-				? __( 'Comment posted successfully.', 'mcp-oauth' )
-				: __( 'Comment submitted and is awaiting moderation.', 'mcp-oauth' ),
+				? __( 'Comment posted successfully.', 'mcp-connect' )
+				: __( 'Comment submitted and is awaiting moderation.', 'mcp-connect' ),
 		);
 	}
 }

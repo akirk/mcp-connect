@@ -43,7 +43,7 @@ function server_key(): string {
  */
 function display_name(): string {
 	$name = trim( get_bloginfo( 'name' ) );
-	return '' !== $name ? $name : __( 'WordPress', 'mcp-oauth' );
+	return '' !== $name ? $name : __( 'WordPress', 'mcp-connect' );
 }
 
 /**
@@ -111,16 +111,16 @@ function catalog( string $url ): array {
 	$bridge   = array( $key => bridge_server( $url ) );
 	$add_to   = static function ( string $file ): string {
 		/* translators: %s: file name */
-		return sprintf( __( 'Add to %s', 'mcp-oauth' ), '<code>' . $file . '</code>' );
+		return sprintf( __( 'Add to %s', 'mcp-connect' ), '<code>' . $file . '</code>' );
 	};
 	$connector_steps = static function ( string $app ) use ( $name, $url ): array {
 		return array(
 			/* translators: %s: app name */
-			sprintf( __( 'In %s, open Settings → Connectors.', 'mcp-oauth' ), $app ),
-			__( 'Choose “Add custom connector”.', 'mcp-oauth' ),
+			sprintf( __( 'In %s, open Settings → Connectors.', 'mcp-connect' ), $app ),
+			__( 'Choose “Add custom connector”.', 'mcp-connect' ),
 			/* translators: %s: connector name */
-			sprintf( __( 'Name it “%s” and paste the URL below as the remote MCP server URL. Leave client ID and secret empty.', 'mcp-oauth' ), $name ),
-			__( 'Save, then click Connect and sign in to this site when the browser opens.', 'mcp-oauth' ),
+			sprintf( __( 'Name it “%s” and paste the URL below as the remote MCP server URL. Leave client ID and secret empty.', 'mcp-connect' ), $name ),
+			__( 'Save, then click Connect and sign in to this site when the browser opens.', 'mcp-connect' ),
 		);
 	};
 
@@ -131,11 +131,11 @@ function catalog( string $url ): array {
 			'docs_url' => 'https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp',
 			'link'     => array(
 				'url'         => claude_connector_link( $url ),
-				'label'       => __( 'Add to Claude.ai', 'mcp-oauth' ),
-				'description' => __( 'Opens claude.ai with the connector name and URL already filled in — nothing to copy.', 'mcp-oauth' ),
+				'label'       => __( 'Add to Claude.ai', 'mcp-connect' ),
+				'description' => __( 'Opens claude.ai with the connector name and URL already filled in — nothing to copy.', 'mcp-connect' ),
 			),
 			'steps'    => $connector_steps( 'claude.ai' ),
-			'note'     => __( 'Custom connectors are available on Free, Pro, Max, Team and Enterprise plans. Free accounts can add one. Connectors are also available in Claude Desktop and the mobile apps.', 'mcp-oauth' ),
+			'note'     => __( 'Custom connectors are available on Free, Pro, Max, Team and Enterprise plans. Free accounts can add one. Connectors are also available in Claude Desktop and the mobile apps.', 'mcp-connect' ),
 		),
 		'claude-desktop' => array(
 			'name'     => 'Claude Desktop',
@@ -147,39 +147,39 @@ function catalog( string $url ): array {
 			'name'     => 'Claude Code',
 			'docs_url' => 'https://docs.anthropic.com/en/docs/claude-code/mcp',
 			'command'  => 'claude mcp add --transport http --scope user ' . sh( $key ) . ' ' . sh( $url ),
-			'hint'     => __( 'Run in a terminal, then type /mcp in Claude Code to sign in.', 'mcp-oauth' ),
+			'hint'     => __( 'Run in a terminal, then type /mcp in Claude Code to sign in.', 'mcp-connect' ),
 		),
 		'chatgpt-web'    => array(
 			'name'     => 'ChatGPT',
 			'cloud'    => true,
 			'docs_url' => 'https://developers.openai.com/plugins/deploy/connect-chatgpt',
 			'steps'    => array(
-				__( 'On chatgpt.com, open Settings → Security and Login and enable Developer Mode.', 'mcp-oauth' ),
-				__( 'Go to ChatGPT Plugins and select the plus button.', 'mcp-oauth' ),
+				__( 'On chatgpt.com, open Settings → Security and Login and enable Developer Mode.', 'mcp-connect' ),
+				__( 'Go to ChatGPT Plugins and select the plus button.', 'mcp-connect' ),
 				/* translators: %s: connector name */
-				sprintf( __( 'Name the connection “%s”, paste the URL below as its public MCP endpoint, and create it.', 'mcp-oauth' ), $name ),
-				__( 'Sign in to this site when prompted, then review the tools ChatGPT discovered.', 'mcp-oauth' ),
+				sprintf( __( 'Name the connection “%s”, paste the URL below as its public MCP endpoint, and create it.', 'mcp-connect' ), $name ),
+				__( 'Sign in to this site when prompted, then review the tools ChatGPT discovered.', 'mcp-connect' ),
 			),
 		),
 		'codex'          => array(
 			'name'     => 'Codex CLI',
 			'docs_url' => 'https://developers.openai.com/learn/docs-mcp',
 			'command'  => 'codex mcp add ' . sh( $key ) . ' --url ' . sh( $url ) . ' && codex mcp login ' . sh( $key ),
-			'hint'     => __( 'Run in a terminal; the second command opens the browser to sign in.', 'mcp-oauth' ),
+			'hint'     => __( 'Run in a terminal; the second command opens the browser to sign in.', 'mcp-connect' ),
 		),
 		'cursor'         => array(
 			'name'     => 'Cursor',
 			'docs_url' => 'https://cursor.com/docs/context/mcp',
 			'link'     => array(
 				'url'         => cursor_deeplink( $url ),
-				'label'       => __( 'Add to Cursor', 'mcp-oauth' ),
-				'description' => __( 'Opens Cursor and adds the server for you — nothing to copy.', 'mcp-oauth' ),
+				'label'       => __( 'Add to Cursor', 'mcp-connect' ),
+				'description' => __( 'Opens Cursor and adds the server for you — nothing to copy.', 'mcp-connect' ),
 			),
 			'snippet'  => json( array( 'mcpServers' => $http ) ),
 			'hint'     => $add_to( 'mcp.json' ),
 			'paths'    => array(
-				__( 'Global', 'mcp-oauth' )  => '~/.cursor/mcp.json',
-				__( 'Project', 'mcp-oauth' ) => '.cursor/mcp.json',
+				__( 'Global', 'mcp-connect' )  => '~/.cursor/mcp.json',
+				__( 'Project', 'mcp-connect' ) => '.cursor/mcp.json',
 			),
 		),
 		'vscode'         => array(
@@ -188,8 +188,8 @@ function catalog( string $url ): array {
 			'snippet'  => json( array( 'servers' => $http_t ) ),
 			'hint'     => $add_to( 'mcp.json' ),
 			'paths'    => array(
-				__( 'Workspace', 'mcp-oauth' ) => '.vscode/mcp.json',
-				__( 'User', 'mcp-oauth' )      => __( 'Command palette → “MCP: Open User Configuration”', 'mcp-oauth' ),
+				__( 'Workspace', 'mcp-connect' ) => '.vscode/mcp.json',
+				__( 'User', 'mcp-connect' )      => __( 'Command palette → “MCP: Open User Configuration”', 'mcp-connect' ),
 			),
 		),
 		'windsurf'       => array(
@@ -206,7 +206,7 @@ function catalog( string $url ): array {
 			'name'     => 'Gemini CLI',
 			'docs_url' => 'https://github.com/google-gemini/gemini-cli/blob/main/docs/tools/mcp-server.md',
 			'command'  => 'gemini mcp add --transport http ' . sh( $key ) . ' ' . sh( $url ),
-			'hint'     => __( 'Run in a terminal. If sign-in is not prompted automatically, start it with /mcp auth in Gemini CLI.', 'mcp-oauth' ),
+			'hint'     => __( 'Run in a terminal. If sign-in is not prompted automatically, start it with /mcp auth in Gemini CLI.', 'mcp-connect' ),
 		),
 		'antigravity'    => array(
 			'name'     => 'Antigravity',
@@ -214,9 +214,9 @@ function catalog( string $url ): array {
 			'snippet'  => json( array( 'mcpServers' => array( $key => array( 'serverUrl' => $url ) ) ) ),
 			'hint'     => $add_to( 'mcp_config.json' ),
 			'paths'    => array(
-				__( 'Global', 'mcp-oauth' ) => '~/.gemini/antigravity/mcp_config.json',
+				__( 'Global', 'mcp-connect' ) => '~/.gemini/antigravity/mcp_config.json',
 			),
-			'note'     => __( 'Open Agent Settings → Customizations and choose Authenticate after adding the server.', 'mcp-oauth' ),
+			'note'     => __( 'Open Agent Settings → Customizations and choose Authenticate after adding the server.', 'mcp-connect' ),
 		),
 		'zed'            => array(
 			'name'     => 'Zed',
@@ -244,15 +244,15 @@ function catalog( string $url ): array {
 					),
 				)
 			),
-			'hint'     => __( 'Add as a Remote Server using Streamable HTTP, or add this to Cline’s MCP settings:', 'mcp-oauth' ),
-			'paths'    => array( __( 'Via UI', 'mcp-oauth' ) => __( 'Cline sidebar → MCP Servers → Remote Servers', 'mcp-oauth' ) ),
+			'hint'     => __( 'Add as a Remote Server using Streamable HTTP, or add this to Cline’s MCP settings:', 'mcp-connect' ),
+			'paths'    => array( __( 'Via UI', 'mcp-connect' ) => __( 'Cline sidebar → MCP Servers → Remote Servers', 'mcp-connect' ) ),
 		),
 		'roo-code'       => array(
 			'name'     => 'Roo Code',
 			'docs_url' => 'https://docs.roocode.com/features/mcp/server-transports',
 			'snippet'  => json( array( 'mcpServers' => $bridge ) ),
 			'hint'     => $add_to( 'mcp.json' ),
-			'paths'    => array( __( 'Project', 'mcp-oauth' ) => '.roo/mcp.json' ),
+			'paths'    => array( __( 'Project', 'mcp-connect' ) => '.roo/mcp.json' ),
 			'bridge'   => true,
 		),
 		'opencode'       => array(
@@ -270,16 +270,16 @@ function catalog( string $url ): array {
 			),
 			'hint'     => $add_to( 'opencode.json' ),
 			'paths'    => array(
-				__( 'Project', 'mcp-oauth' ) => 'opencode.json',
-				__( 'Global', 'mcp-oauth' )  => '~/.config/opencode/opencode.json',
+				__( 'Project', 'mcp-connect' ) => 'opencode.json',
+				__( 'Global', 'mcp-connect' )  => '~/.config/opencode/opencode.json',
 			),
-			'note'     => __( 'OpenCode detects OAuth automatically. Run opencode mcp auth with the server name if it does not prompt on first use.', 'mcp-oauth' ),
+			'note'     => __( 'OpenCode detects OAuth automatically. Run opencode mcp auth with the server name if it does not prompt on first use.', 'mcp-connect' ),
 		),
 		'other'          => array(
-			'name'          => __( 'Any other MCP client', 'mcp-oauth' ),
-			'hint'          => __( 'Any client that supports remote MCP servers with OAuth only needs your MCP server URL:', 'mcp-oauth' ),
+			'name'          => __( 'Any other MCP client', 'mcp-connect' ),
+			'hint'          => __( 'Any client that supports remote MCP servers with OAuth only needs your MCP server URL:', 'mcp-connect' ),
 			'url'           => true,
-			'snippet_intro' => __( 'For clients that only run local (stdio) servers, use the mcp-remote bridge instead:', 'mcp-oauth' ),
+			'snippet_intro' => __( 'For clients that only run local (stdio) servers, use the mcp-remote bridge instead:', 'mcp-connect' ),
 			'snippet'       => json( array( 'mcpServers' => $bridge ) ),
 			'bridge'        => true,
 		),

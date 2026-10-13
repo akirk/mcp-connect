@@ -35,7 +35,7 @@ function register(): void {
  */
 function add_test( array $tests ): array {
 	$tests['async']['mcp_oauth'] = array(
-		'label'             => __( 'MCP Connect endpoints', 'mcp-oauth' ),
+		'label'             => __( 'MCP Connect endpoints', 'mcp-connect' ),
 		'test'              => rest_url( \MCP_OAuth\REST_NAMESPACE . '/health' ),
 		'has_rest'          => true,
 		'async_direct_test' => __NAMESPACE__ . '\test',
@@ -84,7 +84,7 @@ function probe_document( string $url, string $field ): array {
 	return array(
 		'ok'     => false,
 		/* translators: %d: HTTP status code */
-		'detail' => sprintf( __( 'HTTP %d, or the response is not this plugin’s metadata document.', 'mcp-oauth' ), $code ),
+		'detail' => sprintf( __( 'HTTP %d, or the response is not this plugin’s metadata document.', 'mcp-connect' ), $code ),
 	);
 }
 
@@ -120,7 +120,7 @@ function probe_challenge( string $url ): array {
 	return array(
 		'ok'     => false,
 		/* translators: %d: HTTP status code */
-		'detail' => sprintf( __( 'HTTP %d without the expected WWW-Authenticate challenge.', 'mcp-oauth' ), $code ),
+		'detail' => sprintf( __( 'HTTP %d without the expected WWW-Authenticate challenge.', 'mcp-connect' ), $code ),
 	);
 }
 
@@ -142,45 +142,45 @@ function request_args( array $extra = array() ): array {
  */
 function test(): array {
 	$result = array(
-		'label'       => __( 'AI clients can discover and sign in to this site’s MCP server', 'mcp-oauth' ),
+		'label'       => __( 'AI clients can discover and sign in to this site’s MCP server', 'mcp-connect' ),
 		'status'      => 'good',
 		'badge'       => array(
-			'label' => __( 'MCP', 'mcp-oauth' ),
+			'label' => __( 'MCP', 'mcp-connect' ),
 			'color' => 'blue',
 		),
 		'description' => '',
 		'actions'     => sprintf(
 			'<p><a href="%s">%s</a></p>',
 			esc_url( \MCP_OAuth\Admin\page_url() ),
-			esc_html__( 'Open MCP Connect', 'mcp-oauth' )
+			esc_html__( 'Open MCP Connect', 'mcp-connect' )
 		),
 		'test'        => 'mcp_oauth',
 	);
 
 	if ( ! \MCP_OAuth\adapter_available() ) {
 		$result['status']      = 'critical';
-		$result['label']       = __( 'The MCP Adapter is not loaded', 'mcp-oauth' );
-		$result['description'] = '<p>' . esc_html__( 'MCP Connect bundles the MCP Adapter, which provides the MCP server itself. Its files are missing from this installation — reinstall the plugin, or run composer install if this is a source checkout.', 'mcp-oauth' ) . '</p>';
+		$result['label']       = __( 'The MCP Adapter is not loaded', 'mcp-connect' );
+		$result['description'] = '<p>' . esc_html__( 'MCP Connect bundles the MCP Adapter, which provides the MCP server itself. Its files are missing from this installation — reinstall the plugin, or run composer install if this is a source checkout.', 'mcp-connect' ) . '</p>';
 		return $result;
 	}
 	if ( ! \MCP_OAuth\transport_allowed() ) {
 		$result['status']      = 'critical';
-		$result['label']       = __( 'The MCP Connect endpoints are disabled because the site is not served over HTTPS', 'mcp-oauth' );
-		$result['description'] = '<p>' . esc_html__( 'Sign-in tokens would travel unencrypted. Switch the site to HTTPS to let AI clients connect.', 'mcp-oauth' ) . '</p>';
+		$result['label']       = __( 'The MCP Connect endpoints are disabled because the site is not served over HTTPS', 'mcp-connect' );
+		$result['description'] = '<p>' . esc_html__( 'Sign-in tokens would travel unencrypted. Switch the site to HTTPS to let AI clients connect.', 'mcp-connect' ) . '</p>';
 		return $result;
 	}
 	$server = Servers\primary();
 	if ( ! $server ) {
 		$result['status']      = 'critical';
-		$result['label']       = __( 'No MCP server is registered', 'mcp-oauth' );
-		$result['description'] = '<p>' . esc_html__( 'The MCP Adapter’s default server is missing — check the mcp_adapter_create_default_server filter.', 'mcp-oauth' ) . '</p>';
+		$result['label']       = __( 'No MCP server is registered', 'mcp-connect' );
+		$result['description'] = '<p>' . esc_html__( 'The MCP Adapter’s default server is missing — check the mcp_adapter_create_default_server filter.', 'mcp-connect' ) . '</p>';
 		return $result;
 	}
 
 	$probes = array(
-		array( __( 'Protected-resource metadata', 'mcp-oauth' ), Discovery\protected_resource_metadata_url( $server ), probe_document( Discovery\protected_resource_metadata_url( $server ), 'resource' ) ),
-		array( __( 'Authorization-server metadata', 'mcp-oauth' ), Discovery\issuer() . Discovery\AUTHORIZATION_SERVER, probe_document( Discovery\issuer() . Discovery\AUTHORIZATION_SERVER, 'issuer' ) ),
-		array( __( 'Sign-in challenge on the MCP endpoint', 'mcp-oauth' ), Servers\resource( $server ), probe_challenge( Servers\resource( $server ) ) ),
+		array( __( 'Protected-resource metadata', 'mcp-connect' ), Discovery\protected_resource_metadata_url( $server ), probe_document( Discovery\protected_resource_metadata_url( $server ), 'resource' ) ),
+		array( __( 'Authorization-server metadata', 'mcp-connect' ), Discovery\issuer() . Discovery\AUTHORIZATION_SERVER, probe_document( Discovery\issuer() . Discovery\AUTHORIZATION_SERVER, 'issuer' ) ),
+		array( __( 'Sign-in challenge on the MCP endpoint', 'mcp-connect' ), Servers\resource( $server ), probe_challenge( Servers\resource( $server ) ) ),
 	);
 
 	$failed = array();
@@ -195,10 +195,10 @@ function test(): array {
 
 	if ( $failed ) {
 		$result['status']      = 'critical';
-		$result['label']       = __( 'AI clients cannot discover how to sign in to this site’s MCP server', 'mcp-oauth' );
-		$result['description'] = '<p>' . esc_html__( 'These requests were made from the server to its own public URL. A page cache, a security plugin or the web server may be answering before WordPress does, or stripping headers.', 'mcp-oauth' ) . '</p>' . $list;
+		$result['label']       = __( 'AI clients cannot discover how to sign in to this site’s MCP server', 'mcp-connect' );
+		$result['description'] = '<p>' . esc_html__( 'These requests were made from the server to its own public URL. A page cache, a security plugin or the web server may be answering before WordPress does, or stripping headers.', 'mcp-connect' ) . '</p>' . $list;
 	} else {
-		$result['description'] = '<p>' . esc_html__( 'The discovery documents are served and anonymous requests to the MCP endpoint receive the sign-in challenge.', 'mcp-oauth' ) . '</p>' . $list;
+		$result['description'] = '<p>' . esc_html__( 'The discovery documents are served and anonymous requests to the MCP endpoint receive the sign-in challenge.', 'mcp-connect' ) . '</p>' . $list;
 	}
 	return $result;
 }
@@ -211,48 +211,48 @@ function add_info( array $info ): array {
 	$servers = \MCP_OAuth\adapter_available() ? Servers\all() : array();
 	$fields  = array(
 		'version'     => array(
-			'label' => __( 'Version', 'mcp-oauth' ),
+			'label' => __( 'Version', 'mcp-connect' ),
 			'value' => MCP_OAUTH_VERSION,
 		),
 		'adapter'     => array(
-			'label' => __( 'MCP Adapter', 'mcp-oauth' ),
+			'label' => __( 'MCP Adapter', 'mcp-connect' ),
 			'value' => \MCP_OAuth\adapter_source(),
 		),
 		'transport'   => array(
-			'label' => __( 'OAuth endpoints enabled', 'mcp-oauth' ),
-			'value' => \MCP_OAuth\transport_allowed() ? __( 'Yes', 'mcp-oauth' ) : __( 'No (site is not HTTPS)', 'mcp-oauth' ),
+			'label' => __( 'OAuth endpoints enabled', 'mcp-connect' ),
+			'value' => \MCP_OAuth\transport_allowed() ? __( 'Yes', 'mcp-connect' ) : __( 'No (site is not HTTPS)', 'mcp-connect' ),
 		),
 		'endpoint'    => array(
-			'label' => __( 'MCP endpoint', 'mcp-oauth' ),
-			'value' => $server ? Servers\resource( $server ) : __( 'none', 'mcp-oauth' ),
+			'label' => __( 'MCP endpoint', 'mcp-connect' ),
+			'value' => $server ? Servers\resource( $server ) : __( 'none', 'mcp-connect' ),
 		),
 		'servers'     => array(
-			'label' => __( 'Registered MCP servers', 'mcp-oauth' ),
-			'value' => $servers ? implode( ', ', array_keys( $servers ) ) : __( 'none', 'mcp-oauth' ),
+			'label' => __( 'Registered MCP servers', 'mcp-connect' ),
+			'value' => $servers ? implode( ', ', array_keys( $servers ) ) : __( 'none', 'mcp-connect' ),
 		),
 		'issuer'      => array(
-			'label' => __( 'Issuer', 'mcp-oauth' ),
+			'label' => __( 'Issuer', 'mcp-connect' ),
 			'value' => Discovery\issuer(),
 		),
 		'authorize'   => array(
-			'label' => __( 'Authorization endpoint', 'mcp-oauth' ),
+			'label' => __( 'Authorization endpoint', 'mcp-connect' ),
 			'value' => \MCP_OAuth\Authorize\endpoint_url(),
 		),
 		'hidden'      => array(
-			'label' => __( 'Abilities hidden by an administrator', 'mcp-oauth' ),
-			'value' => Abilities\hidden() ? implode( ', ', Abilities\hidden() ) : __( 'none', 'mcp-oauth' ),
+			'label' => __( 'Abilities hidden by an administrator', 'mcp-connect' ),
+			'value' => Abilities\hidden() ? implode( ', ', Abilities\hidden() ) : __( 'none', 'mcp-connect' ),
 		),
 		'visible'     => array(
-			'label' => __( 'Abilities visible to clients', 'mcp-oauth' ),
+			'label' => __( 'Abilities visible to clients', 'mcp-connect' ),
 			'value' => (string) count( array_filter( array_column( Abilities\report(), 'visible' ) ) ) . ' / ' . count( Abilities\report() ),
 		),
 		'connections' => array(
-			'label' => __( 'Active connections', 'mcp-oauth' ),
+			'label' => __( 'Active connections', 'mcp-connect' ),
 			'value' => (string) ( Storage\installed() ? count( Storage\list_connections() ) : 0 ),
 		),
 	);
 	$info['mcp-oauth'] = array(
-		'label'  => __( 'MCP Connect', 'mcp-oauth' ),
+		'label'  => __( 'MCP Connect', 'mcp-connect' ),
 		'fields' => $fields,
 	);
 	return $info;

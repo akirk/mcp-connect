@@ -9,7 +9,7 @@
  * Author:            Alex Kirk
  * License:           GPLv2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       mcp-oauth
+ * Text Domain:       mcp-connect
  *
  * @package mcp-connect
  */
@@ -78,20 +78,20 @@ function adapter_available(): bool {
  */
 function adapter_source(): string {
 	if ( ! adapter_available() ) {
-		return __( 'not loaded', 'mcp-oauth' );
+		return __( 'not loaded', 'mcp-connect' );
 	}
 	try {
 		$file = ( new \ReflectionClass( '\WP\MCP\Core\McpAdapter' ) )->getFileName();
 	} catch ( \ReflectionException $e ) {
-		return __( 'unknown', 'mcp-oauth' );
+		return __( 'unknown', 'mcp-connect' );
 	}
 	$path = str_replace( wp_normalize_path( WP_PLUGIN_DIR ) . '/', '', wp_normalize_path( (string) $file ) );
 
 	return 0 === strpos( wp_normalize_path( (string) $file ), wp_normalize_path( MCP_OAUTH_DIR ) )
 		/* translators: %s: path to the loaded MCP Adapter file, relative to the plugin directory. */
-		? sprintf( __( 'bundled with MCP Connect (%s)', 'mcp-oauth' ), $path )
+		? sprintf( __( 'bundled with MCP Connect (%s)', 'mcp-connect' ), $path )
 		/* translators: %s: path to the loaded MCP Adapter file, relative to the plugin directory. */
-		: sprintf( __( 'separately installed plugin (%s)', 'mcp-oauth' ), $path );
+		: sprintf( __( 'separately installed plugin (%s)', 'mcp-connect' ), $path );
 }
 
 /**

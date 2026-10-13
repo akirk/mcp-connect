@@ -100,10 +100,10 @@ function handle_toggle( $request ) {
 		}
 	}
 	if ( ! $row ) {
-		return new \WP_Error( 'mcp_oauth_unknown_ability', __( 'Unknown ability.', 'mcp-oauth' ), array( 'status' => 404 ) );
+		return new \WP_Error( 'mcp_oauth_unknown_ability', __( 'Unknown ability.', 'mcp-connect' ), array( 'status' => 404 ) );
 	}
 	if ( $row['locked'] ) {
-		return new \WP_Error( 'mcp_oauth_locked_ability', __( 'This ability opted out of MCP and cannot be shown.', 'mcp-oauth' ), array( 'status' => 400 ) );
+		return new \WP_Error( 'mcp_oauth_locked_ability', __( 'This ability opted out of MCP and cannot be shown.', 'mcp-connect' ), array( 'status' => 400 ) );
 	}
 	set_hidden( $name, $hide );
 
@@ -124,7 +124,7 @@ function handle_toggle( $request ) {
 		array(
 			'ability'  => $name,
 			'visible'  => ! $hide,
-			'reason'   => $hide ? __( 'hidden here', 'mcp-oauth' ) : '',
+			'reason'   => $hide ? __( 'hidden here', 'mcp-connect' ) : '',
 			'override' => $hide,
 			'count'    => $visible,
 			'total'    => count( $rows ),
@@ -220,11 +220,11 @@ function handle_tool_toggle( $request ) {
 		}
 	}
 	if ( ! $row ) {
-		return new \WP_Error( 'mcp_oauth_unknown_ability', __( 'Unknown ability.', 'mcp-oauth' ), array( 'status' => 404 ) );
+		return new \WP_Error( 'mcp_oauth_unknown_ability', __( 'Unknown ability.', 'mcp-connect' ), array( 'status' => 404 ) );
 	}
 	// Demoting always works; promoting needs an ability that can be a tool at all.
 	if ( $expose && ! $row['promotable'] ) {
-		return new \WP_Error( 'mcp_oauth_not_promotable', __( 'This ability cannot be exposed as a tool of its own.', 'mcp-oauth' ), array( 'status' => 400 ) );
+		return new \WP_Error( 'mcp_oauth_not_promotable', __( 'This ability cannot be exposed as a tool of its own.', 'mcp-connect' ), array( 'status' => 400 ) );
 	}
 	set_direct_tool( $name, $expose );
 
@@ -377,15 +377,15 @@ function report(): array {
 		$name    = $ability->get_name();
 		$locked  = ! $visible && ( 0 === strpos( $name, 'mcp-adapter/' ) || ! in_array( $name, $hidden, true ) );
 		if ( in_array( $name, $hidden, true ) && ! $visible ) {
-			$reason = __( 'hidden here', 'mcp-oauth' );
+			$reason = __( 'hidden here', 'mcp-connect' );
 		} elseif ( 0 === strpos( $name, 'mcp-adapter/' ) ) {
-			$reason = __( 'the adapter’s own meta-tool', 'mcp-oauth' );
+			$reason = __( 'the adapter’s own meta-tool', 'mcp-connect' );
 		} elseif ( isset( $mcp['public'] ) ) {
-			$reason = $visible ? '' : __( 'opted out with meta.mcp.public = false', 'mcp-oauth' );
+			$reason = $visible ? '' : __( 'opted out with meta.mcp.public = false', 'mcp-connect' );
 		} elseif ( array_key_exists( 'public', $meta ) ) {
-			$reason = $visible ? __( 'meta.public is true', 'mcp-oauth' ) : __( 'meta.public is false', 'mcp-oauth' );
+			$reason = $visible ? __( 'meta.public is true', 'mcp-connect' ) : __( 'meta.public is false', 'mcp-connect' );
 		} else {
-			$reason = __( 'no public flag set', 'mcp-oauth' );
+			$reason = __( 'no public flag set', 'mcp-connect' );
 		}
 		$rows[] = array(
 			'name'        => $name,
