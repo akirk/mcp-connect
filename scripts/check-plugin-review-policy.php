@@ -49,6 +49,10 @@ foreach ( $iterator as $file ) {
 	);
 
 	foreach ( $checks as $pattern => $message ) {
+		// Dependency plugin headers are library metadata, not this plugin's header.
+		if ( 'vendor' === $top_dir && false !== strpos( $message, 'Tested up to' ) ) {
+			continue;
+		}
 		if ( preg_match( $pattern, $source, $match, PREG_OFFSET_CAPTURE ) ) {
 			$line       = substr_count( substr( $source, 0, $match[0][1] ), "\n" ) + 1;
 			$failures[] = sprintf( '%s:%d: %s', $relative, $line, $message );

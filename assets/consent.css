@@ -1,0 +1,9 @@
+		#login { width: 400px; }
+		.mcp-oauth-consent h2 { font-size: 18px; font-weight: 600; margin: 0 0 12px; }
+		.mcp-oauth-consent p { margin: 0 0 14px; }
+		.mcp-oauth-consent dl { margin: 0 0 16px; }
+		.mcp-oauth-consent dt { font-weight: 600; margin-top: 8px; }
+		.mcp-oauth-consent dd { margin: 2px 0 0; word-break: break-all; }
+		.mcp-oauth-consent .description { color: #646970; font-size: 13px; }
+		.mcp-oauth-consent .submit { display: flex; gap: 8px; margin-top: 16px; }
+		.mcp-oauth-consent .submit .button { float: none; }

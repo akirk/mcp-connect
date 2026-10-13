@@ -264,19 +264,9 @@ function render( array $pending ): void {
 	$server = $pending['server'];
 	$user   = wp_get_current_user();
 
+	wp_enqueue_style( 'mcp-connect-consent', plugins_url( 'assets/consent.css', MCP_OAUTH_FILE ), array(), MCP_OAUTH_VERSION );
 	login_header( __( 'Connect an AI client', 'mcp-connect' ) );
 	?>
-	<style>
-		#login { width: 400px; }
-		.mcp-oauth-consent h2 { font-size: 18px; font-weight: 600; margin: 0 0 12px; }
-		.mcp-oauth-consent p { margin: 0 0 14px; }
-		.mcp-oauth-consent dl { margin: 0 0 16px; }
-		.mcp-oauth-consent dt { font-weight: 600; margin-top: 8px; }
-		.mcp-oauth-consent dd { margin: 2px 0 0; word-break: break-all; }
-		.mcp-oauth-consent .description { color: #646970; font-size: 13px; }
-		.mcp-oauth-consent .submit { display: flex; gap: 8px; margin-top: 16px; }
-		.mcp-oauth-consent .submit .button { float: none; }
-	</style>
 	<form class="mcp-oauth-consent" method="post" action="<?php echo esc_url( endpoint_url() ); ?>">
 		<h2>
 			<?php

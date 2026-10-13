@@ -1,0 +1,37 @@
+		.mcp-oauth .mcp-oauth-endpoint { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:8px 0; }
+		.mcp-oauth .mcp-oauth-endpoint code { font-size:14px; padding:6px 10px; word-break:break-all; }
+		.mcp-oauth .mcp-oauth-tabs { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 12px; }
+		.mcp-oauth .mcp-oauth-tab { border:1px solid #c3c4c7; background:#f6f7f7; border-radius:4px; padding:6px 12px; cursor:pointer; }
+		.mcp-oauth .mcp-oauth-tab[aria-selected="true"] { background:#2271b1; border-color:#2271b1; color:#fff; }
+		.mcp-oauth .mcp-oauth-client { max-width:900px; margin-top:0; }
+		.mcp-oauth .mcp-oauth-client h3 { margin-top:0; }
+		.mcp-oauth .mcp-oauth-oneclick { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+		.mcp-oauth .mcp-oauth-manual { margin:20px 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:.02em; color:#646970; }
+		.mcp-oauth .mcp-oauth-snippet { position:relative; }
+		.mcp-oauth .mcp-oauth-snippet pre { background:#f6f7f7; border:1px solid #dcdcde; padding:12px 80px 12px 12px; overflow:auto; margin:0 0 8px; }
+		.mcp-oauth .mcp-oauth-snippet pre.is-shell { white-space:pre-wrap; word-break:break-all; }
+		.mcp-oauth .mcp-oauth-snippet pre code { background:transparent; padding:0; font-size:13px; }
+		.mcp-oauth .mcp-oauth-snippet .mcp-oauth-copy { position:absolute; top:6px; right:6px; }
+		.mcp-oauth .mcp-oauth-paths { margin:0 0 12px; }
+		.mcp-oauth h2 { margin-top:1.5em; }
+		.mcp-oauth .nav-tab-wrapper { margin-top:12px; }
+		.mcp-oauth .mcp-oauth-eye { background:none; border:0; padding:0; cursor:pointer; line-height:1; }
+		.mcp-oauth .mcp-oauth-eye:disabled { opacity:.5; cursor:wait; }
+		.mcp-oauth .mcp-oauth-ability.is-hidden { color:#646970; }
+		.mcp-oauth .mcp-oauth-scroll { overflow-x:auto; max-width:100%; }
+		.mcp-oauth .mcp-oauth-ability-toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; max-width:1100px; margin:20px 0 12px; }
+		.mcp-oauth #mcp-oauth-ability-search { min-width:240px; }
+		.mcp-oauth .mcp-oauth-ability-toolbar .description { margin-left:auto; }
+		.mcp-oauth .mcp-oauth-ability-column { width:34%; }
+		.mcp-oauth .mcp-oauth-ability-summary { display:grid; grid-template-columns:34% 1fr; gap:14px; align-items:start; }
+		.mcp-oauth .mcp-oauth-ability-description { line-height:1.6; }
+		.mcp-oauth .mcp-oauth-ability td { padding:12px 14px; vertical-align:middle; }
+		.mcp-oauth .mcp-oauth-ability-heading { display:flex; align-items:center; gap:10px; }
+		.mcp-oauth .mcp-oauth-ability-details { margin:6px 0 0 30px; }
+		.mcp-oauth .mcp-oauth-ability-details summary { font-size:12px; color:#646970; cursor:pointer; }
+		.mcp-oauth .mcp-oauth-ability-details p { margin:10px 0; }
+		.mcp-oauth .mcp-oauth-ability-details .description { max-width:70em; }
+		@media (max-width:782px) { .mcp-oauth .mcp-oauth-ability-summary { grid-template-columns:1fr; gap:6px; } }
+		.mcp-oauth .mcp-oauth-ability-help { max-width:1100px; margin:16px 0; }
+		.mcp-oauth .mcp-oauth-ability-help summary { cursor:pointer; color:#646970; }
+		.mcp-oauth .mcp-oauth-reason.is-override { color:#b26200; font-weight:600; }
