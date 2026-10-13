@@ -1,13 +1,13 @@
 === MCP Connect ===
 
 Contributors: akirk
-Tags: mcp, ai, oauth, claude, chatgpt
+Tags: mcp, webmcp, ai, oauth, abilities
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Stable tag: 0.1.0
+Stable tag: 1.0.0
 
 Connect AI clients to WordPress MCP servers with OAuth sign-in, and expose abilities to browser agents through WebMCP.
 
@@ -101,7 +101,7 @@ The browser bridge registers tools only when the browser supports WebMCP and the
 
 == Changelog ==
 
-= 0.1.0 =
+= 1.0.0 =
 - Initial release.
 - Bundles the MCP Adapter, so no separate install is needed; a separately installed one takes over automatically.
 

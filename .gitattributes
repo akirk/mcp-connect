@@ -13,6 +13,7 @@ CLAUDE.md export-ignore
 phpunit.xml.dist export-ignore
 playwright.config.js export-ignore
 tests export-ignore
+scripts export-ignore
 
 # Build/Dev
 composer.lock export-ignore
@@ -38,6 +39,7 @@ vendor/theseer export-ignore
 vendor/wp-coding-standards export-ignore
 vendor/**/test export-ignore
 vendor/**/tests export-ignore
+scripts export-ignore
 vendor/**/Test export-ignore
 vendor/**/Tests export-ignore
 

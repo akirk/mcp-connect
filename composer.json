@@ -16,7 +16,11 @@
 	},
 	"scripts": {
 		"test": "phpunit",
-		"lint": "phpcs"
+		"lint": [
+			"phpcs",
+			"@lint:review-policy"
+		],
+		"lint:review-policy": "php scripts/check-plugin-review-policy.php"
 	},
 	"config": {
 		"optimize-autoloader": true,

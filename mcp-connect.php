@@ -3,7 +3,7 @@
  * Plugin Name:       MCP Connect
  * Plugin URI:        https://github.com/akirk/mcp-connect
  * Description:       Lets AI clients (Claude.ai, Claude Code, ChatGPT, Codex, Cursor, VS Code …) connect to this site's MCP servers with a normal sign-in. Bundles the WordPress MCP Adapter, adds the OAuth 2.1 server it lacks, a Connect page with ready-made links and snippets, and WebMCP browser tools.
- * Version:           0.1.0
+ * Version:           1.0.0
  * Requires at least: 6.9
  * Requires PHP:      7.4
  * Author:            Alex Kirk
@@ -18,7 +18,7 @@ namespace MCP_OAuth;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MCP_OAUTH_VERSION', '0.1.0' );
+define( 'MCP_OAUTH_VERSION', '1.0.0' );
 define( 'MCP_OAUTH_FILE', __FILE__ );
 define( 'MCP_OAUTH_DIR', plugin_dir_path( __FILE__ ) );
 

@@ -50,6 +50,9 @@ jobs:
       - name: Drop the generated lock file
         run: rm -f "build/${{ github.event.repository.name }}/composer.lock"
 
+      - name: Run WordPress.org review policy checks
+        run: php scripts/check-plugin-review-policy.php "build/${{ github.event.repository.name }}"
+
       - name: Run Plugin Check
         uses: wordpress/plugin-check-action@v1
         with:
