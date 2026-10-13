@@ -69,3 +69,6 @@ add_action(
 		);
 	}
 );
+
+// Test-only opt-in, scoped to a single request.
+add_filter( 'mcp_oauth_allow_anonymous_access', function () { return isset( $_SERVER['HTTP_X_DEMO_ANONYMOUS'] ) && '1' === $_SERVER['HTTP_X_DEMO_ANONYMOUS']; } );

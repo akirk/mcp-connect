@@ -48,7 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         # The plugin bundles the MCP Adapter; it must also work next to a
-        # separately installed copy of the same plugin.
+        # separately installed 0.7 release (pinned by the Playground fixture).
         adapter: [ bundled, standalone ]
     steps:
       - uses: actions/checkout@v6

@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       MCP Connect
  * Plugin URI:        https://github.com/akirk/mcp-connect
- * Description:       Lets AI clients (Claude.ai, Claude Code, ChatGPT, Codex, Cursor, VS Code …) connect to this site's MCP servers with a normal sign-in. Bundles the WordPress MCP Adapter, adds the OAuth 2.1 server it lacks, and a Connect page with ready-made links and snippets.
+ * Description:       Lets AI clients (Claude.ai, Claude Code, ChatGPT, Codex, Cursor, VS Code …) connect to this site's MCP servers with a normal sign-in. Bundles the WordPress MCP Adapter, adds the OAuth 2.1 server it lacks, a Connect page with ready-made links and snippets, and WebMCP browser tools.
  * Version:           0.1.0
  * Requires at least: 6.9
  * Requires PHP:      7.4
@@ -61,6 +61,10 @@ require MCP_OAUTH_DIR . 'includes/abilities.php';
 require MCP_OAUTH_DIR . 'includes/health.php';
 require MCP_OAUTH_DIR . 'includes/clients.php';
 require MCP_OAUTH_DIR . 'includes/admin.php';
+
+foreach ( array( 'secure-context', 'rate-limiter', 'settings', 'ability-bridge', 'builtin-tools', 'rest-api', 'plugin' ) as $webmcp_component ) {
+	require_once MCP_OAUTH_DIR . 'includes/webmcp/class-' . $webmcp_component . '.php';
+}
 
 /**
  * Whether the MCP Adapter is loaded.
@@ -153,6 +157,8 @@ function authorize_capability(): string {
  */
 function boot(): void {
 	Admin\register();
+	Abilities\register();
+	WebMCP\Plugin::instance();
 	Health\register();
 	boot_adapter();
 
@@ -162,7 +168,6 @@ function boot(): void {
 
 	Storage\maybe_install();
 	Servers\register();
-	Abilities\register();
 
 	if ( ! transport_allowed() ) {
 		return;

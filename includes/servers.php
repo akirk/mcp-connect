@@ -113,8 +113,10 @@ function inventory( $server ): array {
 		'prompt'   => array( 'get_prompts', 'get_mcp_prompt' ),
 	);
 	$rows = array();
+	$schema = method_exists( $server, 'get_schemas' ) ? $server->get_schemas()->forVersion( '2025-11-25' ) : null;
 	foreach ( $sources as $type => $source ) {
-		foreach ( $server->{$source[0]}() as $key => $dto ) {
+		$components = $schema ? $server->{$source[0]}( $schema ) : $server->{$source[0]}();
+		foreach ( $components as $key => $dto ) {
 			$wrapper = method_exists( $server, $source[1] ) ? $server->{$source[1]}( (string) $key ) : null;
 			$rows[]  = component( $type, (string) $key, $dto, $wrapper );
 		}
@@ -139,12 +141,14 @@ function component( string $type, string $key, $dto, $wrapper = null ): array {
 	$name    = $key;
 	if ( 'resource' !== $type && method_exists( $dto, 'getName' ) ) {
 		$name = (string) $dto->getName();
+	} elseif ( 'resource' !== $type && method_exists( $dto, 'get' ) ) {
+		$name = (string) $dto->get( 'name' );
 	}
 	return array(
 		'type'        => $type,
 		'name'        => $name,
 		'ability'     => isset( $context['ability_name'] ) && is_string( $context['ability_name'] ) ? $context['ability_name'] : '',
-		'description' => method_exists( $dto, 'getDescription' ) ? (string) $dto->getDescription() : '',
+		'description' => method_exists( $dto, 'getDescription' ) ? (string) $dto->getDescription() : ( method_exists( $dto, 'get' ) ? (string) $dto->get( 'description' ) : '' ),
 	);
 }
 

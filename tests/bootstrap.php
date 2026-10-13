@@ -65,6 +65,7 @@ namespace {
 	function esc_url_raw( $url ) { return $url; }
 	function wp_kses( $text, $allowed ) { return $text; }
 	function wp_kses_post( $text ) { return $text; }
+	function wp_strip_all_tags( $text ) { return strip_tags( $text ); }
 	function sanitize_text_field( $text ) {
 		$text = strip_tags( (string) $text );
 		$text = preg_replace( '/[\r\n\t ]+/', ' ', $text );
@@ -143,6 +144,7 @@ namespace {
 	function delete_option( $name ) { unset( $GLOBALS['wp_test']['options'][ $name ] ); return true; }
 	function get_transient( $name ) { return $GLOBALS['wp_test']['transients'][ $name ] ?? false; }
 	function set_transient( $name, $value, $ttl = 0 ) { $GLOBALS['wp_test']['transients'][ $name ] = $value; return true; }
+	function wp_cache_flush_group( $group ) { return true; }
 	function delete_transient( $name ) { unset( $GLOBALS['wp_test']['transients'][ $name ] ); return true; }
 	function wp_next_scheduled( $hook ) { return false; }
 	function wp_schedule_event( $ts, $recurrence, $hook ) { return true; }
@@ -205,6 +207,10 @@ namespace {
 		public function get_name() { return $this->name; }
 		public function get_label() { return $this->args['label'] ?? $this->name; }
 		public function get_meta() { return $this->args['meta'] ?? array(); }
+		public function get_meta_item( $key, $default = null ) { return $this->get_meta()[ $key ] ?? $default; }
+		public function get_description() { return $this->args['description'] ?? $this->name; }
+		public function get_input_schema() { return $this->args['input_schema'] ?? array(); }
+		public function check_permissions( $input = null ) { return isset( $this->args['permission_callback'] ) ? ( $this->args['permission_callback'] )( $input ) : true; }
 	}
 
 	/**

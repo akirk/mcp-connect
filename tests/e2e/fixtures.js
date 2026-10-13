@@ -99,14 +99,18 @@ function oauthHelpers( baseURL, request ) {
 	/** JSON-RPC calls against the MCP endpoint with a bearer token; keeps the session id. */
 	function mcp( accessToken ) {
 		let session = null;
+		let protocolVersion = null;
 		const call = async ( method, params = {}, id = 1 ) => {
 			const headers = { Authorization: 'Bearer ' + accessToken };
 			if ( session ) {
 				headers[ 'Mcp-Session-Id' ] = session;
 			}
+			if ( protocolVersion && method !== 'initialize' ) { headers[ 'MCP-Protocol-Version' ] = protocolVersion; }
 			const r = await request.post( mcpUrl, { headers, data: { jsonrpc: '2.0', id, method, params } } );
 			session = r.headers()[ 'mcp-session-id' ] || session;
-			return { status: r.status(), headers: r.headers(), body: await json( r ) };
+			const body = await json( r );
+			if ( method === 'initialize' && body?.result?.protocolVersion ) { protocolVersion = body.result.protocolVersion; }
+			return { status: r.status(), headers: r.headers(), body };
 		};
 		call.initialize = () => call( 'initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'e2e', version: '1' } } );
 		return call;
