@@ -1,19 +1,19 @@
 # MCP Connect
 
-**Contributors:** akirk
-**Tags:** mcp, ai, oauth, claude, chatgpt
-**Requires at least:** 6.9
-**Tested up to:** 7.1
-**Requires PHP:** 7.4
-**License:** GPLv2 or later
-**License URI:** https://www.gnu.org/licenses/gpl-2.0.html
-**Stable tag:** 0.1.0
+- Contributors: akirk
+- Tags: mcp, ai, oauth, claude, chatgpt
+- Requires at least: 6.9
+- Tested up to: 7.1
+- Requires PHP: 7.4
+- License: GPLv2 or later
+- License URI: https://www.gnu.org/licenses/gpl-2.0.html
+- Stable tag: 0.1.0
 
-Connect Claude.ai, Claude Code, ChatGPT, Codex, Cursor and other AI clients to your site's MCP servers with a normal sign-in.
-
-[Try MCP Connect in WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/akirk/mcp-connect/main/blueprint.json)
+Connect AI clients to WordPress MCP servers with OAuth sign-in, and expose abilities to browser agents through WebMCP.
 
 ## Description
+
+[Try MCP Connect in WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/akirk/mcp-connect/main/blueprint.json)
 
 The [MCP Adapter](https://github.com/WordPress/mcp-adapter) exposes WordPress abilities as an MCP server, but it only accepts cookie or Application Password authentication. AI clients such as Claude.ai expect the OAuth 2.1 flow described by the MCP specification: they discover the authorization server, register themselves, and send the user to the site to sign in.
 
@@ -69,7 +69,38 @@ Open an ability’s **Details** and enable **Add to the MCP client’s tool list
 
 The OAuth endpoints are only exposed on HTTPS sites (and local environments).
 
-## Filters
+## Installation
+
+1. Upload the release ZIP through **Plugins → Add New → Upload Plugin**, or copy the `mcp-connect` release directory to `wp-content/plugins/`.
+2. Activate MCP Connect. The WordPress MCP Adapter is bundled with the release.
+3. Open **Tools → MCP Connect + WebMCP** and choose your AI client under **Connect**.
+4. Follow the connection instructions, sign in to WordPress, and approve the client's access. Remote OAuth connections require HTTPS.
+
+## Frequently Asked Questions
+
+### Do I need to install the MCP Adapter separately?
+
+No. The release includes it. An existing standalone MCP Adapter can remain active; see the bundled adapter details above.
+
+### Do I need an account with an AI service?
+
+MCP Connect does not require an external service. To connect an AI client, you need that client's own account or setup. The plugin provides connection instructions; your chosen client communicates with your site and may process the data returned by the abilities you authorize. Check that service's terms and privacy policy before connecting it.
+
+### Who can access my site's abilities?
+
+Clients act as the WordPress user who approved their connection. Each ability checks that user's permissions. Logged-out access is disabled by default.
+
+### Can I disconnect a client?
+
+Yes. Revoke its access from the connected clients list under **Tools → MCP Connect + WebMCP**.
+
+### Does WebMCP work in every browser?
+
+The browser bridge registers tools only when the browser supports WebMCP and the page uses HTTPS or a browser-trusted loopback origin.
+
+## Developer Notes
+
+### Filters
 
 - `mcp_oauth_authorize_capability` — capability a user needs to connect a client (default `read`, the MCP Adapter's transport default).
 - `mcp_oauth_redirect_uri_schemes` — custom URL schemes accepted as redirect URIs for native apps.
@@ -80,12 +111,12 @@ The OAuth endpoints are only exposed on HTTPS sites (and local environments).
 - `mcp_oauth_tools` — the final tool list of the default MCP server, given the adapter's meta-tools and the promoted abilities as further arguments.
 - `mcp_oauth_registration_limits` — per-address limits on anonymous client registration (`per_hour`, `max_clients`).
 
-## Development
+### Development
 
 ```
 composer install          # the bundled MCP Adapter, PHPUnit and WordPress coding standards
 composer test             # unit tests (no WordPress needed; tests/bootstrap.php stubs it)
-composer lint             # phpcs
+composer lint             # WordPress standards, review checks and PHP 7.4+ compatibility
 npm run build:webmcp      # compile the browser bridge from src/webmcp.ts
 npm install && npx playwright install chromium
 npm run test:e2e          # Playwright Test; boots WordPress with wp-playground-cli (tests/e2e/playground.js)
@@ -94,6 +125,8 @@ npm run test:e2e          # Playwright Test; boots WordPress with wp-playground-
 `vendor/` holds the bundled MCP Adapter and is not committed, so a checkout needs `composer install` before it runs. What ships is built by CI: every push produces a `dist/<branch>` branch with the production dependencies installed (`.github/workflows/build-dist.yml`), which is what the Playground link above installs and what a release would be built from.
 
 The e2e suite runs against the bundled adapter. Set `MCP_ADAPTER_PLUGIN=1` to also install the standalone MCP Adapter plugin from the pinned 0.7.0 GitHub release and exercise the two side by side — `MCP_ADAPTER_ZIP=<url>` picks another release, `MCP_ADAPTER_DIR=/path/to/mcp-adapter` mounts a local checkout instead (works offline). Set `PLAYGROUND_URL` to run the specs against a site that is already running (`npx playwright test --ui` works too). All of it runs in GitHub Actions on every push, with the e2e suite covering both the bundled and the standalone adapter.
+
+GitHub Actions also runs [WordPress Plugin Check](https://github.com/WordPress/plugin-check-action) against the exported release tree with production dependencies installed. These checks support submission preparation; directory approval still requires review. Keep the directory metadata, installation instructions, FAQ and changelog in `readme.txt` in sync with this README.
 
 ## Changelog
 

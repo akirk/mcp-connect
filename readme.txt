@@ -1,0 +1,111 @@
+=== MCP Connect ===
+
+Contributors: akirk
+Tags: mcp, ai, oauth, claude, chatgpt
+Requires at least: 6.9
+Tested up to: 7.1
+Requires PHP: 7.4
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Stable tag: 0.1.0
+
+Connect AI clients to WordPress MCP servers with OAuth sign-in, and expose abilities to browser agents through WebMCP.
+
+== Description ==
+
+[Try MCP Connect in WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/akirk/mcp-connect/main/blueprint.json)
+
+The [MCP Adapter](https://github.com/WordPress/mcp-adapter) exposes WordPress abilities as an MCP server, but it only accepts cookie or Application Password authentication. AI clients such as Claude.ai expect the OAuth 2.1 flow described by the MCP specification: they discover the authorization server, register themselves, and send the user to the site to sign in.
+
+This plugin adds exactly that:
+
+- RFC 9728 protected-resource metadata and RFC 8414 authorization-server metadata on the `/.well-known/` paths.
+- Dynamic client registration (RFC 7591), rate limited.
+- An authorization endpoint on `wp-login.php` with a consent screen in the login page's own style, so signing in works even where REST cookie authentication is disabled.
+- Authorization-code grant with mandatory PKCE (S256), refresh-token rotation, and revocation (RFC 7009).
+- Bearer-token authentication on the MCP routes — and only there. Tokens are bound to the MCP server they were issued for.
+- A **Tools → MCP Connect + WebMCP** page with a one-click "Add to Claude.ai" link and ready-made commands or config snippets for Claude Desktop, Claude Code, ChatGPT, Codex, Cursor, VS Code, Windsurf, Gemini CLI, Antigravity, Zed, Cline, Roo Code and OpenCode, plus a **Tools** tab listing what the server actually hands to a client, the list of connected clients with a Revoke button, and a list of every registered ability with an eye icon to hide it from clients and a checkbox to expose it as a tool of its own.
+- A Site Health test that verifies, from the server itself, that the discovery documents are served and the MCP endpoint issues the sign-in challenge.
+
+Tokens are opaque random strings stored only as SHA-256 hashes. No signing keys, no external services.
+
+= The MCP Adapter is bundled =
+
+The MCP Adapter is not in the WordPress.org plugin directory, so this plugin ships a copy of it: activating MCP Connect is enough to get an MCP server.
+
+If the MCP Adapter is also installed as a plugin of its own, nothing collides and nothing needs to be turned off — the standalone plugin takes over, and the bundled copy stands down.
+
+From MCP Adapter 0.6.1 on, both copies register their classes with the [Jetpack autoloader](https://github.com/Automattic/jetpack-autoloader), which loads the newer of the two once, for both plugins. An older standalone plugin brings a plain Composer autoloader that is registered first, so it serves its own classes throughout. Either way only one set of `WP\MCP\*` classes is ever loaded, and the adapter's singletons make the second boot a no-op.
+
+Update or remove the standalone plugin at will — MCP Connect keeps working either way. Tools → Site Health → Info → MCP Connect names the copy actually in use.
+
+= WebMCP in the browser =
+
+MCP Connect also exposes WordPress abilities to AI agents visiting the site through the [WebMCP browser API](https://github.com/webmachinelearning/webmcp). It registers tools on the front end and in wp-admin, using `document.modelContext.registerTool()` with fallbacks for older browser implementations. Browsers without WebMCP support simply skip registration. HTTPS or a browser-trusted loopback origin is required.
+
+The **Abilities** tab under **Tools → MCP Connect + WebMCP** has one searchable list with descriptions and one hide/show choice for both MCP and WebMCP. Technical details and MCP direct-tool shortcuts are collapsed by default. The **Browser (WebMCP)** entry under **Connect** explains browser connections and lets administrators disable them. Browser connections are enabled by default. The MCP tool inventory is available in collapsed troubleshooting details on Abilities. Every execution checks the current user's permissions and input schema. Signed-in browser requests also require a security nonce. Hidden abilities and abilities explicitly opted out with `meta.mcp.public = false` or `wmcp_visibility = private` remain unavailable through both protocols.
+
+Logged-out access is disabled and has no admin setting. To explicitly enable it for both protocols, use:
+
+```php
+add_filter( 'mcp_oauth_allow_anonymous_access', '__return_true' );
+```
+
+Ability permission callbacks still apply. Anonymous MCP requests use a stateless transport and receive visible abilities as direct tools, avoiding the adapter's authenticated discovery/execute meta-tools. Custom MCP servers retain their own transport permission callbacks. Older public-discovery options and audience declarations do not enable anonymous access.
+
+The bridge includes search posts, get a post, list categories, and submit a comment abilities, available through both protocols. Existing hidden WebMCP choices and older allowlists are preserved as shared visibility choices. If WebMCP Abilities remains active, it owns browser registration and its own settings; deactivate it to use the integrated bridge. Set `WEBMCP_PLUGIN_DIR=/path/to/webmcp-abilities` to test coexistence in the e2e suite.
+
+The REST endpoints remain under `webmcp/v1` for compatibility. Browser discovery is refreshed on each page load so visibility and permission changes are reflected immediately.
+
+= Which abilities do clients see? =
+
+All of them, unless an ability opts out with `meta.mcp.public = false`. The MCP Adapter on its own only lists abilities marked `meta.public`, but that flag does not protect anything: the MCP endpoint is only reachable by a signed-in user, and each ability enforces its own permission callback for that user. An administrator can hide individual abilities from clients on the MCP Connect page by clicking the eye icon.
+
+= How do clients see them? =
+
+By default the way the MCP Adapter presents them: through the three meta-tools its default server registers — `discover-abilities`, `get-ability-info` and `execute-ability` — so a client names an ability in a string and gets to it in two calls. That keeps the tool list short on a site with a hundred abilities, at the cost of a round trip and a schema the client never sees.
+
+Open an ability’s **Details** and enable **Add to the MCP client’s tool list** on the Abilities tab to also register it as a tool in its own right, with its own name, description and input schema, so a client calls it in a single step. The meta-tools stay either way, so nothing becomes unreachable — promotion is for the handful of abilities worth spending a client's tool budget on. The `mcp_oauth_direct_tools` filter sets the promoted list in code, and `mcp_oauth_tools` has the final say over what the server registers.
+
+The OAuth endpoints are only exposed on HTTPS sites (and local environments).
+
+== Installation ==
+
+1. Upload the release ZIP through **Plugins → Add New → Upload Plugin**, or copy the `mcp-connect` release directory to `wp-content/plugins/`.
+2. Activate MCP Connect. The WordPress MCP Adapter is bundled with the release.
+3. Open **Tools → MCP Connect + WebMCP** and choose your AI client under **Connect**.
+4. Follow the connection instructions, sign in to WordPress, and approve the client's access. Remote OAuth connections require HTTPS.
+
+== Frequently Asked Questions ==
+
+= Do I need to install the MCP Adapter separately? =
+
+No. The release includes it. An existing standalone MCP Adapter can remain active; see the bundled adapter details above.
+
+= Do I need an account with an AI service? =
+
+MCP Connect does not require an external service. To connect an AI client, you need that client's own account or setup. The plugin provides connection instructions; your chosen client communicates with your site and may process the data returned by the abilities you authorize. Check that service's terms and privacy policy before connecting it.
+
+= Who can access my site's abilities? =
+
+Clients act as the WordPress user who approved their connection. Each ability checks that user's permissions. Logged-out access is disabled by default.
+
+= Can I disconnect a client? =
+
+Yes. Revoke its access from the connected clients list under **Tools → MCP Connect + WebMCP**.
+
+= Does WebMCP work in every browser? =
+
+The browser bridge registers tools only when the browser supports WebMCP and the page uses HTTPS or a browser-trusted loopback origin.
+
+
+== Changelog ==
+
+= 0.1.0 =
+- Initial release.
+- Bundles the MCP Adapter, so no separate install is needed; a separately installed one takes over automatically.
+
+
+== Attribution ==
+
+The WebMCP bridge is adapted from [WebMCP Abilities](https://github.com/code-atlantic/webmcp-abilities), version 0.8.0, by Code Atlantic, licensed under GPL-2.0-or-later. The imported browser source is in `src/`; its generated asset is committed in `assets/`.
