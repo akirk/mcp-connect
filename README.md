@@ -1,13 +1,13 @@
 # MCP Connect
 
 - Contributors: akirk
-- Tags: mcp, ai, oauth, claude, chatgpt
+- Tags: mcp, webmcp, ai, oauth, abilities
 - Requires at least: 6.9
 - Tested up to: 7.1
 - Requires PHP: 7.4
 - License: GPLv2 or later
 - License URI: https://www.gnu.org/licenses/gpl-2.0.html
-- Stable tag: 0.1.0
+- Stable tag: 1.0.0
 
 Connect AI clients to WordPress MCP servers with OAuth sign-in, and expose abilities to browser agents through WebMCP.
 
@@ -116,7 +116,8 @@ The browser bridge registers tools only when the browser supports WebMCP and the
 ```
 composer install          # the bundled MCP Adapter, PHPUnit and WordPress coding standards
 composer test             # unit tests (no WordPress needed; tests/bootstrap.php stubs it)
-composer lint             # WordPress standards, review checks and PHP 7.4+ compatibility
+composer lint             # PHPCS and WordPress.org review policy checks
+composer lint:review-policy # review policy checks only (includes installed vendor PHP)
 npm run build:webmcp      # compile the browser bridge from src/webmcp.ts
 npm install && npx playwright install chromium
 npm run test:e2e          # Playwright Test; boots WordPress with wp-playground-cli (tests/e2e/playground.js)
@@ -126,11 +127,11 @@ npm run test:e2e          # Playwright Test; boots WordPress with wp-playground-
 
 The e2e suite runs against the bundled adapter. Set `MCP_ADAPTER_PLUGIN=1` to also install the standalone MCP Adapter plugin from the pinned 0.7.0 GitHub release and exercise the two side by side — `MCP_ADAPTER_ZIP=<url>` picks another release, `MCP_ADAPTER_DIR=/path/to/mcp-adapter` mounts a local checkout instead (works offline). Set `PLAYGROUND_URL` to run the specs against a site that is already running (`npx playwright test --ui` works too). All of it runs in GitHub Actions on every push, with the e2e suite covering both the bundled and the standalone adapter.
 
-GitHub Actions also runs [WordPress Plugin Check](https://github.com/WordPress/plugin-check-action) against the exported release tree with production dependencies installed. These checks support submission preparation; directory approval still requires review. Keep the directory metadata, installation instructions, FAQ and changelog in `readme.txt` in sync with this README.
+GitHub Actions also runs [WordPress Plugin Check](https://github.com/WordPress/plugin-check-action) against the exported release tree with production dependencies installed. The lint command and release-tree workflow also run `scripts/check-plugin-review-policy.php` to flag inline HTML script/style tags, `DONOTCACHEPAGE`, hard-coded plugin paths, PHP `Tested up to` headers and potential credit text. Credit findings need manual review because admin attribution and explicit opt-in are permitted. These checks support submission preparation; directory approval still requires review. Keep the directory metadata, installation instructions, FAQ and changelog in `readme.txt` in sync with this README.
 
 ## Changelog
 
-### 0.1.0
+### 1.0.0
 - Initial release.
 - Bundles the MCP Adapter, so no separate install is needed; a separately installed one takes over automatically.
 

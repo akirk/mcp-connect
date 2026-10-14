@@ -147,9 +147,6 @@ function maybe_serve(): void {
  * Send a JSON document and stop.
  */
 function serve( array $document ): void {
-	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
-		define( 'DONOTCACHEPAGE', true );
-	}
 	nocache_headers();
 	header( 'Content-Type: application/json; charset=UTF-8' );
 	header( 'Access-Control-Allow-Origin: *' );

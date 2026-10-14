@@ -21,6 +21,7 @@ const PAGE_SLUG = 'mcp-connect';
  * Hook the page and notices.
  */
 function register(): void {
+	add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\enqueue_assets' );
 	add_action( 'admin_menu', __NAMESPACE__ . '\register_page' );
 	add_action( 'admin_notices', __NAMESPACE__ . '\dependency_notice' );
 	add_filter( 'plugin_action_links_' . plugin_basename( MCP_OAUTH_FILE ), __NAMESPACE__ . '\action_links' );
@@ -174,7 +175,6 @@ function render(): void {
 		<?php endif; ?>
 	</div>
 	<?php
-	render_assets();
 }
 
 /**
@@ -559,150 +559,28 @@ function render_tools( array $servers ): void {
 }
 
 /**
- * Inline styles and the little bit of script the page needs (tabs, copy buttons).
+ * Enqueue assets only on the connection page.
  */
-function render_assets(): void {
-	?>
-	<style>
-		.mcp-oauth .mcp-oauth-endpoint { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:8px 0; }
-		.mcp-oauth .mcp-oauth-endpoint code { font-size:14px; padding:6px 10px; word-break:break-all; }
-		.mcp-oauth .mcp-oauth-tabs { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 12px; }
-		.mcp-oauth .mcp-oauth-tab { border:1px solid #c3c4c7; background:#f6f7f7; border-radius:4px; padding:6px 12px; cursor:pointer; }
-		.mcp-oauth .mcp-oauth-tab[aria-selected="true"] { background:#2271b1; border-color:#2271b1; color:#fff; }
-		.mcp-oauth .mcp-oauth-client { max-width:900px; margin-top:0; }
-		.mcp-oauth .mcp-oauth-client h3 { margin-top:0; }
-		.mcp-oauth .mcp-oauth-oneclick { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
-		.mcp-oauth .mcp-oauth-manual { margin:20px 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:.02em; color:#646970; }
-		.mcp-oauth .mcp-oauth-snippet { position:relative; }
-		.mcp-oauth .mcp-oauth-snippet pre { background:#f6f7f7; border:1px solid #dcdcde; padding:12px 80px 12px 12px; overflow:auto; margin:0 0 8px; }
-		.mcp-oauth .mcp-oauth-snippet pre.is-shell { white-space:pre-wrap; word-break:break-all; }
-		.mcp-oauth .mcp-oauth-snippet pre code { background:transparent; padding:0; font-size:13px; }
-		.mcp-oauth .mcp-oauth-snippet .mcp-oauth-copy { position:absolute; top:6px; right:6px; }
-		.mcp-oauth .mcp-oauth-paths { margin:0 0 12px; }
-		.mcp-oauth h2 { margin-top:1.5em; }
-		.mcp-oauth .nav-tab-wrapper { margin-top:12px; }
-		.mcp-oauth .mcp-oauth-eye { background:none; border:0; padding:0; cursor:pointer; line-height:1; }
-		.mcp-oauth .mcp-oauth-eye:disabled { opacity:.5; cursor:wait; }
-		.mcp-oauth .mcp-oauth-ability.is-hidden { color:#646970; }
-		.mcp-oauth .mcp-oauth-scroll { overflow-x:auto; max-width:100%; }
-		.mcp-oauth .mcp-oauth-ability-toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; max-width:1100px; margin:20px 0 12px; }
-		.mcp-oauth #mcp-oauth-ability-search { min-width:240px; }
-		.mcp-oauth .mcp-oauth-ability-toolbar .description { margin-left:auto; }
-		.mcp-oauth .mcp-oauth-ability-column { width:34%; }
-		.mcp-oauth .mcp-oauth-ability-summary { display:grid; grid-template-columns:34% 1fr; gap:14px; align-items:start; }
-		.mcp-oauth .mcp-oauth-ability-description { line-height:1.6; }
-		.mcp-oauth .mcp-oauth-ability td { padding:12px 14px; vertical-align:middle; }
-		.mcp-oauth .mcp-oauth-ability-heading { display:flex; align-items:center; gap:10px; }
-		.mcp-oauth .mcp-oauth-ability-details { margin:6px 0 0 30px; }
-		.mcp-oauth .mcp-oauth-ability-details summary { font-size:12px; color:#646970; cursor:pointer; }
-		.mcp-oauth .mcp-oauth-ability-details p { margin:10px 0; }
-		.mcp-oauth .mcp-oauth-ability-details .description { max-width:70em; }
-		@media (max-width:782px) { .mcp-oauth .mcp-oauth-ability-summary { grid-template-columns:1fr; gap:6px; } }
-		.mcp-oauth .mcp-oauth-ability-help { max-width:1100px; margin:16px 0; }
-		.mcp-oauth .mcp-oauth-ability-help summary { cursor:pointer; color:#646970; }
-		.mcp-oauth .mcp-oauth-reason.is-override { color:#b26200; font-weight:600; }
-	</style>
-	<script>
-	( function () {
-		var tabs = document.querySelectorAll( '.mcp-oauth-tab' );
-		var key = 'mcp-oauth-tab';
-		function show( id ) {
-			tabs.forEach( function ( tab ) {
-				var on = tab.dataset.target === id;
-				tab.setAttribute( 'aria-selected', on ? 'true' : 'false' );
-				var panel = document.getElementById( tab.dataset.target );
-				if ( panel ) { panel.hidden = ! on; }
-			} );
-			try { window.localStorage.setItem( key, id ); } catch ( e ) {}
-		}
-		tabs.forEach( function ( tab ) {
-			tab.addEventListener( 'click', function () { show( tab.dataset.target ); } );
-		} );
-		if ( tabs.length ) {
-			var saved = null;
-			try { saved = window.localStorage.getItem( key ); } catch ( e ) {}
-			show( saved && document.getElementById( saved ) ? saved : tabs[0].dataset.target );
-		}
-		function filterAbilities() {
-			var search = document.getElementById( 'mcp-oauth-ability-search' );
-			var filter = document.getElementById( 'mcp-oauth-ability-filter' );
-			if ( ! search || ! filter ) { return; }
-			var query = search.value.trim().toLowerCase();
-			var matches = 0;
-			document.querySelectorAll( '.mcp-oauth-ability' ).forEach( function ( row ) {
-				var hidden = row.classList.contains( 'is-hidden' );
-				row.hidden = row.dataset.search.indexOf( query ) === -1 || ( filter.value === 'available' && hidden ) || ( filter.value === 'hidden' && ! hidden );
-				if ( ! row.hidden ) { matches++; }
-			} );
-			document.getElementById( 'mcp-oauth-no-abilities' ).hidden = matches > 0;
-		}
-		[ 'mcp-oauth-ability-search', 'mcp-oauth-ability-filter' ].forEach( function ( id ) {
-			var control = document.getElementById( id );
-			if ( control ) { control.addEventListener( 'input', filterAbilities ); }
-		} );
-		document.querySelectorAll( '.mcp-oauth-eye' ).forEach( function ( eye ) {
-			eye.addEventListener( 'click', function () {
-				var hide = eye.dataset.visible === '1';
-				eye.disabled = true;
-				window.fetch( <?php echo wp_json_encode( rest_url( \MCP_OAuth\REST_NAMESPACE . '/abilities/visibility' ) ); ?>, {
-					method: 'POST',
-					credentials: 'same-origin',
-					headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?> },
-					body: JSON.stringify( { ability: eye.dataset.ability, hide: hide } )
-				} ).then( function ( r ) { return r.ok ? r.json() : Promise.reject( r ); } ).then( function ( data ) {
-					var row = eye.closest( 'tr' );
-					eye.dataset.visible = data.visible ? '1' : '0';
-					eye.setAttribute( 'aria-pressed', data.visible ? 'true' : 'false' );
-					eye.title = data.visible ? <?php echo wp_json_encode( __( 'Visible — click to hide', 'mcp-connect' ) ); ?> : <?php echo wp_json_encode( __( 'Hidden — click to show', 'mcp-connect' ) ); ?>;
-					eye.innerHTML = data.visible ? '<span class="dashicons dashicons-visibility" style="color:#00a32a"></span>' : '<span class="dashicons dashicons-hidden"></span>';
-					row.classList.toggle( 'is-hidden', ! data.visible );
-					filterAbilities();
-					var reason = row.querySelector( '.mcp-oauth-reason' );
-					reason.textContent = data.reason;
-					reason.classList.toggle( 'is-override', !! data.override );
-					var count = document.getElementById( 'mcp-oauth-visible-count' );
-					if ( count ) { count.textContent = data.count; }
-					// A hidden ability is unreachable, so it cannot be a tool of its own either.
-					var tool = row.querySelector( '.mcp-oauth-tool' );
-					if ( tool ) {
-						tool.disabled = ! data.visible;
-						tool.title = data.visible ? <?php echo wp_json_encode( __( 'Expose this ability as a tool of its own', 'mcp-connect' ) ); ?> : <?php echo wp_json_encode( __( 'Hidden abilities cannot be tools', 'mcp-connect' ) ); ?>;
-					}
-				} ).catch( function () {
-					window.alert( <?php echo wp_json_encode( __( 'Could not change the visibility. Reload the page and try again.', 'mcp-connect' ) ); ?> );
-				} ).then( function () { eye.disabled = false; } );
-			} );
-		} );
-		document.querySelectorAll( '.mcp-oauth-tool' ).forEach( function ( tool ) {
-			tool.addEventListener( 'change', function () {
-				var expose = tool.checked;
-				tool.disabled = true;
-				window.fetch( <?php echo wp_json_encode( rest_url( \MCP_OAuth\REST_NAMESPACE . '/abilities/tool' ) ); ?>, {
-					method: 'POST',
-					credentials: 'same-origin',
-					headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?> },
-					body: JSON.stringify( { ability: tool.dataset.ability, expose: expose } )
-				} ).then( function ( r ) { return r.ok ? r.json() : Promise.reject( r ); } ).then( function ( data ) {
-					tool.checked = data.expose;
-					var count = document.getElementById( 'mcp-oauth-direct-count' );
-					if ( count ) { count.textContent = data.direct; }
-				} ).catch( function () {
-					tool.checked = ! expose;
-					window.alert( <?php echo wp_json_encode( __( 'Could not change the tools. Reload the page and try again.', 'mcp-connect' ) ); ?> );
-				} ).then( function () { tool.disabled = false; } );
-			} );
-		} );
-
-		document.querySelectorAll( '.mcp-oauth-copy' ).forEach( function ( button ) {
-			button.addEventListener( 'click', function () {
-				var label = button.textContent;
-				navigator.clipboard.writeText( button.dataset.copy ).then( function () {
-					button.textContent = '<?php echo esc_js( __( 'Copied', 'mcp-connect' ) ); ?>';
-					setTimeout( function () { button.textContent = label; }, 1500 );
-				} );
-			} );
-		} );
-	} )();
-	</script>
-	<?php
+function enqueue_assets( string $hook ): void {
+	if ( 'tools_page_' . PAGE_SLUG !== $hook ) {
+		return;
+	}
+	wp_enqueue_style( 'mcp-connect-admin', plugins_url( 'assets/admin.css', MCP_OAUTH_FILE ), array(), MCP_OAUTH_VERSION );
+	wp_enqueue_script( 'mcp-connect-admin', plugins_url( 'assets/admin.js', MCP_OAUTH_FILE ), array(), MCP_OAUTH_VERSION, true );
+	wp_localize_script(
+		'mcp-connect-admin',
+		'mcpConnectAdmin',
+		array(
+			'copied'          => __( 'Copied', 'mcp-connect' ),
+			'visibilityUrl'   => rest_url( \MCP_OAuth\REST_NAMESPACE . '/abilities/visibility' ),
+			'visibleTitle'    => __( 'Visible — click to hide', 'mcp-connect' ),
+			'hiddenTitle'     => __( 'Hidden — click to show', 'mcp-connect' ),
+			'toolTitle'       => __( 'Expose this ability as a tool of its own', 'mcp-connect' ),
+			'hiddenToolTitle' => __( 'Hidden abilities cannot be tools', 'mcp-connect' ),
+			'visibilityError' => __( 'Could not change the visibility. Reload the page and try again.', 'mcp-connect' ),
+			'toolUrl'         => rest_url( \MCP_OAuth\REST_NAMESPACE . '/abilities/tool' ),
+			'nonce'           => wp_create_nonce( 'wp_rest' ),
+			'toolError'       => __( 'Could not change the tools. Reload the page and try again.', 'mcp-connect' ),
+		)
+	);
 }

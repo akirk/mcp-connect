@@ -23,7 +23,7 @@ jobs:
           coverage: none
           tools: composer
       - uses: ramsey/composer-install@v4
-      - run: vendor/bin/phpcs
+      - run: composer lint
 
   phpunit:
     name: Unit tests (PHP ${{ matrix.php }})
